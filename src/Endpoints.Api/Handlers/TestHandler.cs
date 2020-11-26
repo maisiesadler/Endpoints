@@ -24,5 +24,11 @@ namespace Endpoints.Api.Handlers
         {
             return "Hello! " + something;
         }
+
+        [Get("/{param1}/{param2}")]
+        public StringHandlerResponse Get(string param1, string param2)
+        {
+            return $"Params are '{param1}' and '{param2}'";
+        }
     }
 }

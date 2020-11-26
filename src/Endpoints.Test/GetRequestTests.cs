@@ -49,5 +49,22 @@ namespace Endpoints.Test
             var content = await response.Content.ReadAsStringAsync();
             Assert.Equal("Hello! " + @param, content);
         }
+
+        [Fact]
+        public async Task GetWithMultipleStringParameters()
+        {
+            // Arrange
+            using var server = _fixture.CreateServer();
+            var client = server.CreateClient();
+
+            // Act
+            var response = await client.GetAsync("/test/test/one/");
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            var content = await response.Content.ReadAsStringAsync();
+            Assert.Equal("Params are 'test' and 'one'", content);
+        }
     }
 }

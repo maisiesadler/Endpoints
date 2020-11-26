@@ -58,7 +58,7 @@ namespace Endpoints.Extensions
             }
 
             var r = (IHandlerResponse)_methodInfo.Invoke(handler, @params.ToArray());
-            await context.Response.WriteAsync(r.Response()); ;
+            await context.Response.WriteAsync(r.Response());
         }
     }
 }
