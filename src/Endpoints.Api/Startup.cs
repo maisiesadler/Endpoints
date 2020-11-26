@@ -36,41 +36,9 @@ namespace Endpoints.Api
 
             app.UseEndpoints(endpoints =>
             {
-                foreach (var (type, handler) in DiscoveryExtensions.GetHandlers(this.GetType().Assembly))
+                foreach (var endpoint in RequestDelegateExtensions.GetEndpoints(this.GetType().Assembly, endpoints.ServiceProvider))
                 {
-                    if (type.GetConstructor(Type.EmptyTypes) == null)
-                    {
-                        System.Console.WriteLine("No empty constructor");
-                        continue;
-                    }
-
-                    foreach (var (methodInfo, method) in DiscoveryExtensions.GetMethods(type))
-                    {
-                        var endpoint = handler.Endpoint + method.Endpoint;
-                        if (method is GetAttribute get)
-                        {
-                            endpoints.MapGet(endpoint, async context =>
-                            {
-                                using var scope = endpoints.ServiceProvider.CreateScope();
-                                var handler = scope.ServiceProvider.GetRequiredService(type);
-
-                                var @params = new List<object>();
-                                foreach (var p in methodInfo.GetParameters())
-                                {
-                                    if (context.Request.RouteValues.TryGetValue(p.Name, out var paramValue))
-                                    {
-                                        @params.Add(paramValue);
-                                    }
-                                    else
-                                    {
-                                        @params.Add(null);
-                                    }
-                                }
-                                var r = (IHandlerResponse)methodInfo.Invoke(handler, @params.ToArray());
-                                await context.Response.WriteAsync(r.Response());
-                            });
-                        }
-                    }
+                    endpoints.MapGet(endpoint.Name, endpoint.RequestDelegate);
                 }
             });
         }
