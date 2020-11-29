@@ -1,9 +1,7 @@
-using System;
-using System.Collections.Generic;
+using System.Threading.Tasks;
 using Endpoints.Api.Handlers;
-using Endpoints.Attributes;
+using Endpoints.Api.Pipelines;
 using Endpoints.Extensions;
-using Endpoints.Responses;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -26,6 +24,10 @@ namespace Endpoints.Api
         {
             services.AddRouting();
 
+            services.AddSingleton<IDbThing, DbThing>();
+
+            services.AddTransient<MyModelPipeline>(sp => new MyModelPipeline(new TimingPipelineStage(new ExceptionHandlingPipelineStage(new GetModelFromDatabase(sp.GetRequiredService<IDbThing>())))));
+
             services.AddScoped<TestHandler>();
         }
 
@@ -40,6 +42,8 @@ namespace Endpoints.Api
                 {
                     endpoints.MapGet(endpoint.Name, endpoint.RequestDelegate);
                 }
+
+                endpoints.MapGet("/testing/{id}", async ctx => await endpoints.ServiceProvider.GetRequiredService<MyModelPipeline>().Run(ctx));
             });
         }
     }
