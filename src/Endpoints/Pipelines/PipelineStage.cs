@@ -3,15 +3,15 @@ using System.Threading.Tasks;
 
 namespace Endpoints.Pipelines
 {
-    public abstract class PipelineStage<TContext, TOut>
+    public abstract class PipelineStage<TIn, TOut>
     {
-        protected readonly PipelineStage<TContext, TOut> _next;
+        protected readonly PipelineStage<TIn, TOut> _next;
 
-        public PipelineStage(PipelineStage<TContext, TOut> next = null)
+        public PipelineStage(PipelineStage<TIn, TOut> next = null)
         {
             _next = next;
         }
 
-        public abstract Task<TOut> RunAsync(TContext context, CancellationToken stoppingToken);
+        public abstract Task<TOut> RunAsync(TIn input, CancellationToken stoppingToken);
     }
 }
