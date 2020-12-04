@@ -16,9 +16,14 @@ namespace Endpoints.Pipelines
             _stages = stages;
         }
 
+        protected virtual Task<TIn> ParseModelAsync(HttpContext context)
+        {
+            return Task.FromResult(ParseModel(context));
+        }
+
         public async Task Run(HttpContext context)
         {
-            var input = ParseModel(context);
+            var input = await ParseModelAsync(context);
             var response = await GetResponse(input);
 
             await ParseResponse(context, response);
