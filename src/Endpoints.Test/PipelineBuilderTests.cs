@@ -1,5 +1,4 @@
 using Xunit;
-using Endpoints.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Endpoints.Api.Pipelines;
 using Endpoints.Pipelines;
@@ -25,7 +24,7 @@ namespace Endpoints.Test
             var sp = services.BuildServiceProvider();
 
             // Act
-            var (pipeline, ok) = pi.GetPipeline(sp);
+            var (pipeline, ok) = pi.TryGetPipeline(sp);
 
             // Assert
             Assert.True(ok);
@@ -78,7 +77,15 @@ namespace Endpoints.Test
             return this;
         }
 
-        public (Pipeline<TIn, TOut>, bool) GetPipeline(IServiceProvider serviceProvider)
+        public Pipeline<TIn, TOut> GetPipeline(IServiceProvider serviceProvider)
+        {
+            var (pipeline, ok) = TryGetPipeline(serviceProvider);
+            if (!ok)
+                throw new InvalidOperationException("Could not create pipeline");
+            return pipeline;
+        }
+
+        public (Pipeline<TIn, TOut>, bool) TryGetPipeline(IServiceProvider serviceProvider)
         {
             var (stages, ok) = BuildStages(serviceProvider);
             if (!ok)
