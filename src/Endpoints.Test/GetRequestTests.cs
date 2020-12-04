@@ -4,6 +4,7 @@ using Xunit;
 using Microsoft.Extensions.DependencyInjection;
 using Endpoints.Api.Pipelines;
 using Microsoft.AspNetCore.Builder;
+using Endpoints.Instructions;
 using Endpoints.Pipelines;
 using Microsoft.AspNetCore.Http;
 using System.Threading;
