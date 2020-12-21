@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using Endpoints.Instructions;
 using Endpoints.Pipelines;
 using Microsoft.AspNetCore.Http;
@@ -18,11 +17,12 @@ namespace Endpoints.Extensions
 
         public static IServiceCollection RegisterPipeline<TPipeline, TIn, TOut>(
             this IServiceCollection services,
-            Action<IPipelineBuilder<TPipeline, TIn, TOut>> builder)
+            Action<IPipelineBuilder<TPipeline, TIn, TOut>> builder = null)
             where TPipeline : Pipeline<TIn, TOut>
         {
             var instructions = new PipelineInstructions<TPipeline, TIn, TOut>();
-            builder(instructions);
+            if (builder != null)
+                builder(instructions);
 
             services.AddSingleton(instructions);
 

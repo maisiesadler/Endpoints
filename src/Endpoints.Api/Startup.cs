@@ -1,4 +1,5 @@
 using Endpoints.Api.Pipelines;
+using Endpoints.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -15,24 +16,31 @@ namespace Endpoints.Api
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRouting();
 
             services.AddSingleton<IDbThing, DbThing>();
 
-            services.AddTransient<MyModelPipeline>(sp => new MyModelPipeline(new TimingPipelineStage(new ExceptionHandlingPipelineStage(new GetModelFromDatabase(sp.GetRequiredService<IDbThing>())))));
+            services.AddPipelines();
+            services.RegisterPipeline<MyModelPipeline, ModelRequest, ModelResponse>(
+                builder => builder.WithStage<TimingPipelineStage>()
+                    .WithStage<ExceptionHandlingPipelineStage>()
+                    .WithStage<GetModelFromDatabase>());
+
+            services.RegisterPipeline<CreateModelPipeline, ModelRequest, CreateModelPipeline.Response>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseRouting();
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGet("/testing/{id}", async ctx => await endpoints.ServiceProvider.GetRequiredService<MyModelPipeline>().Run(ctx));
+                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
+
+                endpoints.MapPost("/testing", registry.Get<CreateModelPipeline, ModelRequest, CreateModelPipeline.Response>());
+                endpoints.MapGet("/testing/{id}", registry.Get<MyModelPipeline, ModelRequest, ModelResponse>());
             });
         }
     }

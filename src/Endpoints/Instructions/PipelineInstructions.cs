@@ -17,8 +17,10 @@ namespace Endpoints.Instructions
     public class PipelineInstructions<TPipeline, TIn, TOut> : IPipelineBuilder<TPipeline, TIn, TOut>
         where TPipeline : Pipeline<TIn, TOut>
     {
-        private readonly Stack<Type> _stages = new Stack<Type>();
+        private readonly Stack<Type> _stages;
         private bool _built = false;
+
+        private bool _stagesAllowed = false;
 
         public PipelineInstructions()
         {
@@ -27,13 +29,27 @@ namespace Endpoints.Instructions
                 throw new InvalidOperationException("Must have one public constructor");
 
             var ctorParams = pipelineCtors[0].GetParameters().ToList();
-            if (ctorParams.Count != 1 || ctorParams[0].ParameterType.IsSubclassOf(typeof(PipelineStage<TIn, TOut>)))
-                throw new InvalidOperationException("Public constructor have one public parameter with of type PipelineStage");
+            if (ctorParams.Count == 0)
+            {
+                _stagesAllowed = false;
+            }
+            else if (ctorParams.Count == 1)
+            {
+                _stagesAllowed = true;
+                _stages = new Stack<Type>();
+            }
+            else
+                throw new InvalidOperationException("Public constructor have one public parameter either no parameters or one with type PipelineStage");
         }
 
         public PipelineInstructions<TPipeline, TIn, TOut> WithStage<TPipelineStage>()
            where TPipelineStage : PipelineStage<TIn, TOut>
         {
+            if (!_stagesAllowed)
+            {
+                throw new InvalidOperationException("Cannot add stages when there is no constructor for stages");
+            }
+
             var type = typeof(TPipelineStage);
 
             _stages.Push(type);
@@ -50,6 +66,17 @@ namespace Endpoints.Instructions
         }
 
         public (Pipeline<TIn, TOut>, bool) TryGetPipeline(IServiceProvider serviceProvider)
+        {
+            if (_stagesAllowed)
+            {
+                return TryGetStagedPipeline(serviceProvider);
+            }
+
+            var pipeline = (TPipeline)Activator.CreateInstance(typeof(TPipeline));
+            return (pipeline, true);
+        }
+
+        private (Pipeline<TIn, TOut>, bool) TryGetStagedPipeline(IServiceProvider serviceProvider)
         {
             var (stages, ok) = BuildStages(serviceProvider);
             if (!ok)
