@@ -7,21 +7,25 @@ using System.Linq;
 
 namespace Endpoints.Instructions
 {
-    public class PipelineInstructions<TIn, TOut>
+    public class PipelineInstructions<TPipeline, TIn, TOut>
+        where TPipeline : Pipeline<TIn, TOut>
     {
-        private static readonly Type[] _pipelineStageConstructor = new[] { typeof(PipelineStage<TIn, TOut>) };
-
         private readonly Stack<Type> _stages = new Stack<Type>();
         private readonly Dictionary<Type, PipelineStage<TIn, TOut>> _stageToNext = new Dictionary<Type, PipelineStage<TIn, TOut>>();
-        private readonly Func<PipelineStage<TIn, TOut>, Pipeline<TIn, TOut>> _pipelineCreator;
         private bool _built = false;
 
-        public PipelineInstructions(Func<PipelineStage<TIn, TOut>, Pipeline<TIn, TOut>> pipelineCreator)
+        public PipelineInstructions()
         {
-            _pipelineCreator = pipelineCreator;
+            var pipelineCtors = typeof(TPipeline).GetConstructors(BindingFlags.Instance | BindingFlags.Public).ToList();
+            if (pipelineCtors.Count != 1)
+                throw new InvalidOperationException("Must have one public constructor");
+
+            var ctorParams = pipelineCtors[0].GetParameters().ToList();
+            if (ctorParams.Count != 1 || ctorParams[0].ParameterType.IsSubclassOf(typeof(PipelineStage<TIn, TOut>)))
+                throw new InvalidOperationException("Public constructor have one public parameter with of type PipelineStage");
         }
 
-        public PipelineInstructions<TIn, TOut> Register<TPipelineStage>(PipelineStage<TIn, TOut> next = null)
+        public PipelineInstructions<TPipeline, TIn, TOut> Register<TPipelineStage>(PipelineStage<TIn, TOut> next = null)
            where TPipelineStage : PipelineStage<TIn, TOut>
         {
             var type = typeof(TPipelineStage);
@@ -48,7 +52,7 @@ namespace Endpoints.Instructions
                 return (null, false);
             }
 
-            var pipeline = _pipelineCreator(stages);
+            var pipeline = (TPipeline)Activator.CreateInstance(typeof(TPipeline), new[] { stages });
 
             return (pipeline, ok);
         }

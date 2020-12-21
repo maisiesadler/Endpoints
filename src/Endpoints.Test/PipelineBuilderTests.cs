@@ -11,7 +11,7 @@ namespace Endpoints.Test
         public void CanCreatePipeline()
         {
             // Arrange
-            var pi = new PipelineInstructions<ModelRequest, ModelResponse>(stages => new MyModelPipeline(stages))
+            var pi = new PipelineInstructions<MyModelPipeline, ModelRequest, ModelResponse>()
                 .Register<TimingPipelineStage>()
                 .Register<GetModelFromDatabase>();
 
@@ -31,7 +31,7 @@ namespace Endpoints.Test
         public void CanBuildPipelineStages()
         {
             // Arrange
-            var pi = new PipelineInstructions<ModelRequest, ModelResponse>(stages => new MyModelPipeline(stages))
+            var pi = new PipelineInstructions<MyModelPipeline, ModelRequest, ModelResponse>()
                 .Register<TimingPipelineStage>()
                 .Register<GetModelFromDatabase>();
 

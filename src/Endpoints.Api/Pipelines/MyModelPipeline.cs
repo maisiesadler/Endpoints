@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Endpoints.Api.Pipelines
 {
-    public class MyModelPipeline : Pipeline<ModelRequest, ModelResponse>
+    public class MyModelPipeline : StagedPipeline<ModelRequest, ModelResponse>
     {
         public MyModelPipeline(PipelineStage<ModelRequest, ModelResponse> stages)
             : base(stages)

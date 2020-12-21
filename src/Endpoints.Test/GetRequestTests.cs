@@ -20,6 +20,35 @@ namespace Endpoints.Test
             _fixture = fixture;
         }
 
+        public class TestGetPipeline : Pipeline<ModelRequest, ModelResponse>
+        {
+            private readonly IDbThing _dbThing;
+
+            public TestGetPipeline(IDbThing dbThing)
+            {
+                _dbThing = dbThing;
+            }
+
+            protected override async Task<ModelResponse> GetResponse(ModelRequest input)
+            {
+                return await _dbThing.GetModel(input);
+            }
+
+            protected override ModelRequest ParseModel(HttpContext context)
+            {
+                return new ModelRequest
+                {
+                    Id = context.Request.RouteValues["id"]?.ToString(),
+                };
+            }
+
+            protected override async Task ParseResponse(HttpContext context, ModelResponse response)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.OK;
+                await context.Response.WriteAsync(response.Name);
+            }
+        }
+
         [Fact]
         public async Task GetWithNoParameters()
         {
@@ -27,10 +56,10 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddSingleton<IDbThing, DbThing>();
-                services.AddTransient<Pipeline<ModelRequest, ModelResponse>>(sp =>
-                    new PipelineInstructions<ModelRequest, ModelResponse>(stages => new MyModelPipeline(stages))
-                        .Register<GetModelFromDatabase>()
-                        .GetPipeline(sp));
+                services.AddTransient<Pipeline<ModelRequest, ModelResponse>, TestGetPipeline>();
+                    // new PipelineInstructions<ModelRequest, ModelResponse>(stages => new MyModelPipeline(stages))
+                    //     .Register<GetModelFromDatabase>()
+                    //     .GetPipeline(sp));
             },
             app => app.UseEndpoints(endpoints =>
             {
@@ -58,7 +87,7 @@ namespace Endpoints.Test
             {
                 services.AddSingleton<IDbThing, DbThing>();
                 services.AddTransient<Pipeline<ModelRequest, ModelResponse>>(sp =>
-                    new PipelineInstructions<ModelRequest, ModelResponse>(stages => new MyModelPipeline(stages))
+                    new PipelineInstructions<MyModelPipeline, ModelRequest, ModelResponse>()
                         .Register<GetModelFromDatabase>()
                         .GetPipeline(sp));
             },
@@ -84,7 +113,7 @@ namespace Endpoints.Test
             public string Id2 { get; set; }
         }
 
-        public class TwoIdsPipeline : Pipeline<TwoIdsModelRequest, ModelResponse>
+        public class TwoIdsPipeline : StagedPipeline<TwoIdsModelRequest, ModelResponse>
         {
             public TwoIdsPipeline(PipelineStage<TwoIdsModelRequest, ModelResponse> stages)
                 : base(stages)
@@ -128,7 +157,7 @@ namespace Endpoints.Test
             {
                 services.AddSingleton<IDbThing, DbThing>();
                 services.AddTransient<Pipeline<TwoIdsModelRequest, ModelResponse>>(sp =>
-                    new PipelineInstructions<TwoIdsModelRequest, ModelResponse>(stages => new TwoIdsPipeline(stages))
+                    new PipelineInstructions<TwoIdsPipeline, TwoIdsModelRequest, ModelResponse>()
                         .Register<TestPipelineStage>()
                         .GetPipeline(sp));
             },

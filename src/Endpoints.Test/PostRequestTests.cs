@@ -29,7 +29,7 @@ namespace Endpoints.Test
             public string Body { get; set; }
         }
 
-        public class ParseBodyPipeline : Pipeline<BodyRequest, ModelResponse>
+        public class ParseBodyPipeline : StagedPipeline<BodyRequest, ModelResponse>
         {
             public ParseBodyPipeline(PipelineStage<BodyRequest, ModelResponse> stages)
                 : base(stages)
@@ -80,7 +80,7 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddTransient<Pipeline<BodyRequest, ModelResponse>>(sp =>
-                    new PipelineInstructions<BodyRequest, ModelResponse>(stages => new ParseBodyPipeline(stages))
+                    new PipelineInstructions<ParseBodyPipeline, BodyRequest, ModelResponse>()
                         .Register<BodyPipelineStage>()
                         .GetPipeline(sp));
             },
@@ -109,7 +109,7 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddTransient<Pipeline<BodyRequest, ModelResponse>>(sp =>
-                    new PipelineInstructions<BodyRequest, ModelResponse>(stages => new ParseBodyPipeline(stages))
+                    new PipelineInstructions<ParseBodyPipeline, BodyRequest, ModelResponse>()
                         .Register<BodyPipelineStage>()
                         .GetPipeline(sp));
             },
@@ -136,7 +136,7 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddTransient<Pipeline<BodyRequest, ModelResponse>>(sp =>
-                    new PipelineInstructions<BodyRequest, ModelResponse>(stages => new ParseBodyPipeline(stages))
+                    new PipelineInstructions<ParseBodyPipeline, BodyRequest, ModelResponse>()
                         .Register<BodyPipelineStage>()
                         .GetPipeline(sp));
             },
