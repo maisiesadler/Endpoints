@@ -12,8 +12,8 @@ namespace Endpoints.Test
         {
             // Arrange
             var pi = new PipelineInstructions<MyModelPipeline, ModelRequest, ModelResponse>()
-                .Register<TimingPipelineStage>()
-                .Register<GetModelFromDatabase>();
+                .WithStage<TimingPipelineStage>()
+                .WithStage<GetModelFromDatabase>();
 
             var services = new ServiceCollection();
             services.AddTransient<IDbThing, DbThing>();
@@ -32,8 +32,8 @@ namespace Endpoints.Test
         {
             // Arrange
             var pi = new PipelineInstructions<MyModelPipeline, ModelRequest, ModelResponse>()
-                .Register<TimingPipelineStage>()
-                .Register<GetModelFromDatabase>();
+                .WithStage<TimingPipelineStage>()
+                .WithStage<GetModelFromDatabase>();
 
             var services = new ServiceCollection();
             services.AddTransient<IDbThing, DbThing>();

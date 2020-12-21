@@ -8,6 +8,7 @@ using Endpoints.Instructions;
 using Endpoints.Pipelines;
 using Microsoft.AspNetCore.Http;
 using System.Threading;
+using Endpoints.Extensions;
 
 namespace Endpoints.Test
 {
@@ -88,7 +89,7 @@ namespace Endpoints.Test
                 services.AddSingleton<IDbThing, DbThing>();
                 services.AddTransient<Pipeline<ModelRequest, ModelResponse>>(sp =>
                     new PipelineInstructions<MyModelPipeline, ModelRequest, ModelResponse>()
-                        .Register<GetModelFromDatabase>()
+                        .WithStage<GetModelFromDatabase>()
                         .GetPipeline(sp));
             },
             app => app.UseEndpoints(endpoints =>
@@ -156,14 +157,14 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddSingleton<IDbThing, DbThing>();
-                services.AddTransient<Pipeline<TwoIdsModelRequest, ModelResponse>>(sp =>
-                    new PipelineInstructions<TwoIdsPipeline, TwoIdsModelRequest, ModelResponse>()
-                        .Register<TestPipelineStage>()
-                        .GetPipeline(sp));
+                services.AddPipelines()
+                    .RegisterPipeline<TwoIdsPipeline, TwoIdsModelRequest, ModelResponse>(
+                        b => b.WithStage<TestPipelineStage>());
             },
             app => app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGet("/test/{id}/{id2}", async ctx => await endpoints.ServiceProvider.GetRequiredService<Pipeline<TwoIdsModelRequest, ModelResponse>>().Run(ctx));
+                var pipelineRegistry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
+                endpoints.MapGet("/test/{id}/{id2}", pipelineRegistry.Get<TwoIdsPipeline, TwoIdsModelRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 

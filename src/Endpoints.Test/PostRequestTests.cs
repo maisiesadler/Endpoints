@@ -81,7 +81,7 @@ namespace Endpoints.Test
             {
                 services.AddTransient<Pipeline<BodyRequest, ModelResponse>>(sp =>
                     new PipelineInstructions<ParseBodyPipeline, BodyRequest, ModelResponse>()
-                        .Register<BodyPipelineStage>()
+                        .WithStage<BodyPipelineStage>()
                         .GetPipeline(sp));
             },
             app => app.UseEndpoints(endpoints =>
@@ -110,7 +110,7 @@ namespace Endpoints.Test
             {
                 services.AddTransient<Pipeline<BodyRequest, ModelResponse>>(sp =>
                     new PipelineInstructions<ParseBodyPipeline, BodyRequest, ModelResponse>()
-                        .Register<BodyPipelineStage>()
+                        .WithStage<BodyPipelineStage>()
                         .GetPipeline(sp));
             },
             app => app.UseEndpoints(endpoints =>
@@ -137,7 +137,7 @@ namespace Endpoints.Test
             {
                 services.AddTransient<Pipeline<BodyRequest, ModelResponse>>(sp =>
                     new PipelineInstructions<ParseBodyPipeline, BodyRequest, ModelResponse>()
-                        .Register<BodyPipelineStage>()
+                        .WithStage<BodyPipelineStage>()
                         .GetPipeline(sp));
             },
             app => app.UseEndpoints(endpoints =>

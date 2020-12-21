@@ -7,11 +7,17 @@ using System.Linq;
 
 namespace Endpoints.Instructions
 {
-    public class PipelineInstructions<TPipeline, TIn, TOut>
+    public interface IPipelineBuilder<TPipeline, TIn, TOut> where TPipeline : Pipeline<TIn, TOut>
+
+    {
+        PipelineInstructions<TPipeline, TIn, TOut> WithStage<TPipelineStage>()
+              where TPipelineStage : PipelineStage<TIn, TOut>;
+    }
+
+    public class PipelineInstructions<TPipeline, TIn, TOut> : IPipelineBuilder<TPipeline, TIn, TOut>
         where TPipeline : Pipeline<TIn, TOut>
     {
         private readonly Stack<Type> _stages = new Stack<Type>();
-        private readonly Dictionary<Type, PipelineStage<TIn, TOut>> _stageToNext = new Dictionary<Type, PipelineStage<TIn, TOut>>();
         private bool _built = false;
 
         public PipelineInstructions()
@@ -25,13 +31,12 @@ namespace Endpoints.Instructions
                 throw new InvalidOperationException("Public constructor have one public parameter with of type PipelineStage");
         }
 
-        public PipelineInstructions<TPipeline, TIn, TOut> Register<TPipelineStage>(PipelineStage<TIn, TOut> next = null)
+        public PipelineInstructions<TPipeline, TIn, TOut> WithStage<TPipelineStage>()
            where TPipelineStage : PipelineStage<TIn, TOut>
         {
             var type = typeof(TPipelineStage);
 
             _stages.Push(type);
-            _stageToNext.Add(type, next);
 
             return this;
         }
@@ -66,20 +71,13 @@ namespace Endpoints.Instructions
 
             while (_stages.TryPop(out var type))
             {
-                if (_stageToNext.TryGetValue(type, out var nextStage))
+                if (stage == null)
                 {
-                    if (stage == null)
-                    {
-                        stage = CreateInnerPipelineStage(type, serviceProvider);
-                    }
-                    else
-                    {
-                        stage = (PipelineStage<TIn, TOut>)Activator.CreateInstance(type, stage);
-                    }
+                    stage = CreateInnerPipelineStage(type, serviceProvider);
                 }
                 else
                 {
-                    return (null, false);
+                    stage = (PipelineStage<TIn, TOut>)Activator.CreateInstance(type, stage);
                 }
             }
 
