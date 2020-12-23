@@ -16,18 +16,17 @@ namespace Endpoints.Test
         public void CanCreatePipeline()
         {
             // Arrange
-            var pi = new RetrievePipelineInstructions<ModelRequest, ModelResponse>()
-                .GetModelFrom(ModelParser.FromBody)
-                .SetResponse(ModelParser.SetFromModelResponse)
-                // .WithStage<TimingPipelineStage>()
-                .Retrieve<DatabaseRetriever>();
+            var instructions = new RetrievePipelineInstructions<ModelRequest, ModelResponse>(
+                ModelParser.FromBody,
+                ModelParser.SetFromModelResponse);
 
             var services = new ServiceCollection();
+            services.AddTransient<DatabaseRetriever>();
             services.AddTransient<IDbThing, DbThing>();
             var sp = services.BuildServiceProvider();
 
             // Act
-            var (pipeline, ok) = pi.TryGetPipeline(sp);
+            var (pipeline, ok) = instructions.TryGetPipeline<DatabaseRetriever, ModelRequest, ModelResponse>(sp);
 
             // Assert
             Assert.True(ok);

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Endpoints.Instructions;
 using Endpoints.Pipelines;
 using Microsoft.AspNetCore.Http;
@@ -31,11 +32,26 @@ namespace Endpoints.Extensions
 
         public static IServiceCollection RegisterRetrievePipeline<TIn, TOut>(
            this IServiceCollection services,
-           Action<RetrievePipelineInstructions<TIn, TOut>> builder = null)
+           Func<HttpContext, Task<TIn>> parseModel,
+           Func<HttpContext, TOut, Task> parseResponse)
         {
-            var instructions = new RetrievePipelineInstructions<TIn, TOut>();
-            if (builder != null)
-                builder(instructions);
+            var instructions = new RetrievePipelineInstructions<TIn, TOut>(
+                parseModel, parseResponse
+            );
+
+            services.AddSingleton(instructions);
+
+            return services;
+        }
+
+        public static IServiceCollection RegisterRetrievePipeline<TIn, TOut>(
+           this IServiceCollection services,
+           Func<HttpContext, TIn> parseModel,
+           Func<HttpContext, TOut, Task> parseResponse)
+        {
+            var instructions = new RetrievePipelineInstructions<TIn, TOut>(
+                parseModel, parseResponse
+            );
 
             services.AddSingleton(instructions);
 
@@ -61,10 +77,11 @@ namespace Endpoints.Extensions
             return pipeline.Run;
         }
 
-        public RequestDelegate GetRetrieve<TIn, TOut>()
+        public RequestDelegate GetRetrieve<TRetriever, TIn, TOut>()
+            where TRetriever : IRetriever<TIn, TOut>
         {
             var instructions = _serviceProvider.GetRequiredService<RetrievePipelineInstructions<TIn, TOut>>();
-            var (pipeline, ok) = instructions.TryGetPipeline(_serviceProvider);
+            var (pipeline, ok) = RetrievePipelineBuilder.TryGetPipeline<TRetriever, TIn, TOut>(instructions, _serviceProvider);
             if (!ok)
                 throw new Exception("Could not create pipeline");
 

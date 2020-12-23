@@ -29,39 +29,37 @@ namespace Endpoints.Test
             return _fixture.CreateServer(services =>
             {
                 services.AddSingleton(database);
+
+                services.AddTransient<CreateCrudModelRetriever>();
+                services.AddTransient<ReadCrudModelRetriever>();
+                services.AddTransient<UpdateCrudModelRetriever>();
+                services.AddTransient<DeleteCrudModelRetriever>();
+
                 services.AddPipelines();
                 services.RegisterRetrievePipeline<CrudModel, CrudId>(
-                    builder => builder
-                        .GetModelFrom(ModelParser.GetModelFromBody)
-                        .SetResponse(ModelParser.SetResponseFromId)
-                        .Retrieve<CreateCrudModelRetriever>()
+                    ModelParser.GetModelFromBody,
+                    ModelParser.SetResponseFromId
                 );
                 services.RegisterRetrievePipeline<CrudId, CrudModel>(
-                    builder => builder
-                        .GetModelFrom(ModelParser.GetIdFromPath)
-                        .SetResponse(ModelParser.SetJsonResponse)
-                        .Retrieve<ReadCrudModelRetriever>()
+                    ModelParser.GetIdFromPath,
+                    ModelParser.SetJsonResponse
                 );
                 services.RegisterRetrievePipeline<UpdateCrudModelRequest, bool>(
-                    builder => builder
-                        .GetModelFrom(ModelParser.GetUpdateCrudModelRequest)
-                        .SetResponse(ModelParser.SuccessfulResponse)
-                        .Retrieve<UpdateCrudModelRetriever>()
+                    ModelParser.GetUpdateCrudModelRequest,
+                    ModelParser.SuccessfulResponse
                 );
                 services.RegisterRetrievePipeline<CrudId, bool>(
-                    builder => builder
-                        .GetModelFrom(ModelParser.GetIdFromPath)
-                        .SetResponse(ModelParser.SuccessfulResponse)
-                        .Retrieve<DeleteCrudModelRetriever>()
+                    ModelParser.GetIdFromPath,
+                    ModelParser.SuccessfulResponse
                 );
             },
             app => app.UseEndpoints(endpoints =>
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapPost("/model", registry.GetRetrieve<CrudModel, CrudId>());
-                endpoints.MapGet("/model/{id}", registry.GetRetrieve<CrudId, CrudModel>());
-                endpoints.MapPut("/model/{id}", registry.GetRetrieve<UpdateCrudModelRequest, bool>());
-                endpoints.MapDelete("/model/{id}", registry.GetRetrieve<CrudId, bool>());
+                endpoints.MapPost("/model", registry.GetRetrieve<CreateCrudModelRetriever, CrudModel, CrudId>());
+                endpoints.MapGet("/model/{id}", registry.GetRetrieve<ReadCrudModelRetriever, CrudId, CrudModel>());
+                endpoints.MapPut("/model/{id}", registry.GetRetrieve<UpdateCrudModelRetriever, UpdateCrudModelRequest, bool>());
+                endpoints.MapDelete("/model/{id}", registry.GetRetrieve<DeleteCrudModelRetriever, CrudId, bool>());
             }));
         }
 
