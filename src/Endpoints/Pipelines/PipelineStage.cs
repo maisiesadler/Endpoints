@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,5 +14,22 @@ namespace Endpoints.Pipelines
         }
 
         public abstract Task<TOut> RunAsync(TIn input, CancellationToken stoppingToken);
+    }
+
+    public class RunnablePipelineStage<TIn, TOut> : PipelineStage<TIn, TOut>
+    {
+        private Func<TIn, Task<TOut>> _run;
+
+        public void SetRunFunction(Func<TIn, Task<TOut>> run)
+        {
+            _run = run;
+        }
+
+        public async override Task<TOut> RunAsync(TIn input, CancellationToken stoppingToken)
+        {
+            if (_run == null) throw new InvalidOperationException("Run function has not been set");
+
+            return await _run(input);
+        }
     }
 }

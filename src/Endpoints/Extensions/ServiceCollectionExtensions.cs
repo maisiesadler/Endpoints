@@ -28,6 +28,19 @@ namespace Endpoints.Extensions
 
             return services;
         }
+
+        public static IServiceCollection RegisterRetrievePipeline<TIn, TOut>(
+           this IServiceCollection services,
+           Action<RetrievePipelineInstructions<TIn, TOut>> builder = null)
+        {
+            var instructions = new RetrievePipelineInstructions<TIn, TOut>();
+            if (builder != null)
+                builder(instructions);
+
+            services.AddSingleton(instructions);
+
+            return services;
+        }
     }
 
     public class PipelineRegistry
@@ -44,6 +57,16 @@ namespace Endpoints.Extensions
         {
             var instructions = _serviceProvider.GetRequiredService<PipelineInstructions<TPipeline, TIn, TOut>>();
             var pipeline = instructions.GetPipeline(_serviceProvider);
+
+            return pipeline.Run;
+        }
+
+        public RequestDelegate GetRetrieve<TIn, TOut>()
+        {
+            var instructions = _serviceProvider.GetRequiredService<RetrievePipelineInstructions<TIn, TOut>>();
+            var (pipeline, ok) = instructions.TryGetPipeline(_serviceProvider);
+            if (!ok)
+                throw new Exception("Could not create pipeline");
 
             return pipeline.Run;
         }

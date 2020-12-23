@@ -5,11 +5,18 @@ using Microsoft.AspNetCore.Http;
 
 namespace Endpoints.Api.Pipelines
 {
-    public class MyModelPipeline : StagedPipeline<ModelRequest, ModelResponse>
+    public class MyModelPipeline : Pipeline<ModelRequest, ModelResponse>
     {
-        public MyModelPipeline(PipelineStage<ModelRequest, ModelResponse> stages)
-            : base(stages)
+        private readonly IDbThing _dbThing;
+
+        public MyModelPipeline(IDbThing dbThing)
         {
+            _dbThing = dbThing;
+        }
+
+        protected async override Task<ModelResponse> GetResponse(ModelRequest input)
+        {
+            return await _dbThing.GetModel(input);
         }
 
         protected override ModelRequest ParseModel(HttpContext context)

@@ -3,18 +3,24 @@ using Microsoft.Extensions.DependencyInjection;
 using Endpoints.Api.Pipelines;
 using Endpoints.Instructions;
 using Endpoints.Extensions;
+using System;
+using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
+using Endpoints.Pipelines;
 
 namespace Endpoints.Test
 {
-    public class PipelineBuilderTests
+    public class RetrievePipelineBuilderTests
     {
         [Fact]
         public void CanCreatePipeline()
         {
             // Arrange
-            var pi = new PipelineInstructions<MyModelPipeline, ModelRequest, ModelResponse>();
+            var pi = new RetrievePipelineInstructions<ModelRequest, ModelResponse>()
+                .GetModelFrom(ModelParser.FromBody)
+                .SetResponse(ModelParser.SetFromModelResponse)
                 // .WithStage<TimingPipelineStage>()
-                // .WithStage<GetModelFromDatabase>();
+                .Retrieve<DatabaseRetriever>();
 
             var services = new ServiceCollection();
             services.AddTransient<IDbThing, DbThing>();
@@ -68,6 +74,34 @@ namespace Endpoints.Test
             // Assert
             var pipeline = registry.Get<MyModelPipeline, ModelRequest, ModelResponse>();
             Assert.NotNull(pipeline);
+        }
+    }
+
+    internal class DatabaseRetriever : IRetriever<ModelRequest, ModelResponse>
+    {
+        private readonly IDbThing _dbThing;
+
+        public DatabaseRetriever(IDbThing dbThing)
+        {
+            _dbThing = dbThing;
+        }
+
+        public async Task<ModelResponse> Retrieve(ModelRequest input)
+        {
+            return await _dbThing.GetModel(input);
+        }
+    }
+
+    public static class ModelParser
+    {
+        internal static ModelRequest FromBody(HttpContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal static Task SetFromModelResponse(HttpContext arg1, ModelResponse arg2)
+        {
+            throw new NotImplementedException();
         }
     }
 }

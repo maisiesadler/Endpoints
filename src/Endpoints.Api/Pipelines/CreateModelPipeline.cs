@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.Http;
 
 namespace Endpoints.Api.Pipelines
 {
-    public class CreateModelPipeline : Pipeline<ModelRequest, CreateModelPipeline.Response>
+    public class CreateModelPipeline : Pipeline<ModelRequest, PipelineResponse<CreateModelPipeline.Response>>
     {
-        protected override Task<Response> GetResponse(ModelRequest input)
+        protected override Task<PipelineResponse<CreateModelPipeline.Response>> GetResponse(ModelRequest input)
         {
-            return Task.FromResult(new Response(true, "new-object-id"));
+            // var response = PipelineResponse<CreateModelPipeline.Response, string>.Fail("error-response");
+            var response = PipelineResponse.Ok<CreateModelPipeline.Response>(new CreateModelPipeline.Response("new-model-id"));
+            return Task.FromResult(response);
         }
 
         protected override ModelRequest ParseModel(HttpContext context)
@@ -20,23 +22,27 @@ namespace Endpoints.Api.Pipelines
             };
         }
 
-        protected override Task ParseResponse(HttpContext context, Response response)
+        protected override Task ParseResponse(HttpContext context, PipelineResponse<CreateModelPipeline.Response> response)
         {
-            context.Response.StatusCode = response.Ok
-                ? (int)HttpStatusCode.OK
-                : (int)HttpStatusCode.BadRequest;
-
-            context.Response.WriteAsync(response.Id);
+            if (response.Success)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.OK;
+                context.Response.WriteAsync(response.Result.Id);
+            }
+            else
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                context.Response.WriteAsync(response.Error.ErrorMessage);
+            }
 
             return Task.CompletedTask;
         }
 
         public record Response
         {
-            public bool Ok { get; }
             public string Id { get; }
 
-            public Response(bool ok, string id) => (Ok, Id) = (ok, id);
+            public Response(string id) => (Id) = (id);
         }
     }
 }
