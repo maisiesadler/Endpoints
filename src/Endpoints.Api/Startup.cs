@@ -24,12 +24,18 @@ namespace Endpoints.Api
             services.AddSingleton<IDbThing, DbThing>();
 
             services.AddPipelines();
-            services.RegisterPipeline<MyModelPipeline, ModelRequest, ModelResponse>();
+            services.RegisterRetrievePipeline<ModelRequest, ModelResponse>(
+                MyModelRetriever.ParseModel,
+                MyModelRetriever.ParseResponse
+            );
                 // builder => builder.WithStage<TimingPipelineStage>()
                 //     .WithStage<ExceptionHandlingPipelineStage>()
                 //     .WithStage<GetModelFromDatabase>());
 
-            services.RegisterPipeline<CreateModelPipeline, ModelRequest, PipelineResponse<CreateModelPipeline.Response>>();
+            services.RegisterRetrievePipeline<ModelRequest, PipelineResponse<CreateModelRetriever.Response>>(
+                CreateModelRetriever.ParseModel,
+                CreateModelRetriever.ParseResponse
+            );
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -40,8 +46,8 @@ namespace Endpoints.Api
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
 
-                endpoints.MapPost("/testing", registry.Get<CreateModelPipeline, ModelRequest, PipelineResponse<CreateModelPipeline.Response>>());
-                endpoints.MapGet("/testing/{id}", registry.Get<MyModelPipeline, ModelRequest, ModelResponse>());
+                endpoints.MapPost("/testing", registry.GetRetrieve<CreateModelRetriever, ModelRequest, PipelineResponse<CreateModelRetriever.Response>>());
+                endpoints.MapGet("/testing/{id}", registry.GetRetrieve<MyModelRetriever, ModelRequest, ModelResponse>());
             });
         }
     }

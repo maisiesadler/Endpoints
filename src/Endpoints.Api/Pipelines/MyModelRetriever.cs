@@ -5,21 +5,21 @@ using Microsoft.AspNetCore.Http;
 
 namespace Endpoints.Api.Pipelines
 {
-    public class MyModelPipeline : Pipeline<ModelRequest, ModelResponse>
+    public class MyModelRetriever : IRetriever<ModelRequest, ModelResponse>
     {
         private readonly IDbThing _dbThing;
 
-        public MyModelPipeline(IDbThing dbThing)
+        public MyModelRetriever(IDbThing dbThing)
         {
             _dbThing = dbThing;
         }
 
-        protected async override Task<ModelResponse> GetResponse(ModelRequest input)
+        public async Task<ModelResponse> Retrieve(ModelRequest input)
         {
             return await _dbThing.GetModel(input);
         }
 
-        protected override ModelRequest ParseModel(HttpContext context)
+        public static ModelRequest ParseModel(HttpContext context)
         {
             return new ModelRequest
             {
@@ -27,7 +27,7 @@ namespace Endpoints.Api.Pipelines
             };
         }
 
-        protected override async Task ParseResponse(HttpContext context, ModelResponse response)
+        public static async Task ParseResponse(HttpContext context, ModelResponse response)
         {
             context.Response.StatusCode = (int)HttpStatusCode.OK;
             await context.Response.WriteAsync(response.Name);

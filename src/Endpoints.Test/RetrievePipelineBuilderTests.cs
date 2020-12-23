@@ -59,11 +59,14 @@ namespace Endpoints.Test
             // Arrange
             var services = new ServiceCollection();
             services.AddPipelines();
-            services.RegisterPipeline<MyModelPipeline, ModelRequest, ModelResponse>(
+            services.RegisterRetrievePipeline<ModelRequest, ModelResponse>(
+                ModelParser.FromBody,
+                ModelParser.SetFromModelResponse
                 // builder => builder.WithStage<TimingPipelineStage>()
                 //                   .WithStage<GetModelFromDatabase>()
             );
 
+            services.AddTransient<DatabaseRetriever>();
             services.AddTransient<IDbThing, DbThing>();
             var sp = services.BuildServiceProvider();
 
@@ -71,7 +74,7 @@ namespace Endpoints.Test
             var registry = sp.GetRequiredService<PipelineRegistry>();
 
             // Assert
-            var pipeline = registry.Get<MyModelPipeline, ModelRequest, ModelResponse>();
+            var pipeline = registry.GetRetrieve<DatabaseRetriever, ModelRequest, ModelResponse>();
             Assert.NotNull(pipeline);
         }
     }

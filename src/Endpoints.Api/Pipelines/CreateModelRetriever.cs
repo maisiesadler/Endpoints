@@ -5,16 +5,16 @@ using Microsoft.AspNetCore.Http;
 
 namespace Endpoints.Api.Pipelines
 {
-    public class CreateModelPipeline : Pipeline<ModelRequest, PipelineResponse<CreateModelPipeline.Response>>
+    public class CreateModelRetriever : IRetriever<ModelRequest, PipelineResponse<CreateModelRetriever.Response>>
     {
-        protected override Task<PipelineResponse<CreateModelPipeline.Response>> GetResponse(ModelRequest input)
+        public Task<PipelineResponse<CreateModelRetriever.Response>> Retrieve(ModelRequest input)
         {
             // var response = PipelineResponse<CreateModelPipeline.Response, string>.Fail("error-response");
-            var response = PipelineResponse.Ok<CreateModelPipeline.Response>(new CreateModelPipeline.Response("new-model-id"));
+            var response = PipelineResponse.Ok<CreateModelRetriever.Response>(new CreateModelRetriever.Response("new-model-id"));
             return Task.FromResult(response);
         }
 
-        protected override ModelRequest ParseModel(HttpContext context)
+        public static ModelRequest ParseModel(HttpContext context)
         {
             return new ModelRequest
             {
@@ -22,7 +22,7 @@ namespace Endpoints.Api.Pipelines
             };
         }
 
-        protected override Task ParseResponse(HttpContext context, PipelineResponse<CreateModelPipeline.Response> response)
+        public static Task ParseResponse(HttpContext context, PipelineResponse<CreateModelRetriever.Response> response)
         {
             if (response.Success)
             {
