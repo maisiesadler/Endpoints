@@ -1,8 +1,8 @@
-using Microsoft.Extensions.DependencyInjection;
-using Endpoints.Pipelines;
 using System;
-using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Endpoints.Pipelines;
+using Microsoft.AspNetCore.Http;
 
 namespace Endpoints.Instructions
 {
@@ -10,6 +10,7 @@ namespace Endpoints.Instructions
     {
         public Func<HttpContext, Task<TIn>> ParseModel { get; }
         public Func<HttpContext, TOut, Task> ParseResponse { get; }
+        public List<Type> Middleware { get; } = new List<Type>();
 
         public RetrievePipelineInstructions(
             Func<HttpContext, Task<TIn>> parseModel,
@@ -31,24 +32,12 @@ namespace Endpoints.Instructions
             return ParseModel != null
                 && ParseResponse != null;
         }
-    }
 
-    public static class RetrievePipelineBuilder
-    {
-        public static (RetrievePipeline<TIn, TOut>, bool) TryGetPipeline<TRetriever, TIn, TOut>(
-            this RetrievePipelineInstructions<TIn, TOut> instructions,
-            IServiceProvider sp)
-            where TRetriever : IRetriever<TIn, TOut>
+        public RetrievePipelineInstructions<TIn, TOut> WithMiddleware<TMiddleware>()
+            where TMiddleware : Middleware<TOut>
         {
-            if (!instructions.Validate())
-            {
-                return (null, false);
-            }
-
-            var retriever = sp.GetRequiredService<TRetriever>();
-            var pipeline = new RetrievePipeline<TIn, TOut>(instructions.ParseModel, instructions.ParseResponse, retriever);
-
-            return (pipeline, true);
+            Middleware.Add(typeof(TMiddleware));
+            return this;
         }
     }
 }

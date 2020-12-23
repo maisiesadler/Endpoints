@@ -7,6 +7,7 @@ using System;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using Endpoints.Pipelines;
+using System.Diagnostics;
 
 namespace Endpoints.Test
 {
@@ -33,25 +34,43 @@ namespace Endpoints.Test
             Assert.NotNull(pipeline);
         }
 
-        // [Fact]
-        // public void CanBuildPipelineStages()
-        // {
-        //     // Arrange
-        //     var pi = new PipelineStageInstructions<MyModelPipeline, ModelRequest, ModelResponse>()
-        //         .WithStage<TimingPipelineStage>()
-        //         .WithStage<GetModelFromDatabase>();
+        [Fact]
+        public void CanBuildMiddleware()
+        {
+            // Arrange
+            var instructions = new RetrievePipelineInstructions<ModelRequest, ModelResponse>(
+                ModelParser.FromBody,
+                ModelParser.SetFromModelResponse)
+                .WithMiddleware<TimingMiddleware>();
 
-        //     var services = new ServiceCollection();
-        //     services.AddTransient<IDbThing, DbThing>();
-        //     var sp = services.BuildServiceProvider();
+            // Act
+            var middleware = instructions.BuildMiddleware();
 
-        //     // Act
-        //     var (stages, ok) = pi.BuildStages(sp);
+            // Assert
+            Assert.NotNull(middleware);
+        }
 
-        //     // Assert
-        //     Assert.True(ok);
-        //     Assert.NotNull(stages);
-        // }
+        [Fact]
+        public void CanBuildPipelineWithStages()
+        {
+            // Arrange
+            var instructions = new RetrievePipelineInstructions<ModelRequest, ModelResponse>(
+                ModelParser.FromBody,
+                ModelParser.SetFromModelResponse)
+                .WithMiddleware<TimingMiddleware>();
+
+            var services = new ServiceCollection();
+            services.AddTransient<DatabaseRetriever>();
+            services.AddTransient<IDbThing, DbThing>();
+            var sp = services.BuildServiceProvider();
+
+            // Act
+            var (pipeline, ok) = instructions.TryGetPipeline<DatabaseRetriever, ModelRequest, ModelResponse>(sp);
+
+            // Assert
+            Assert.True(ok);
+            Assert.NotNull(pipeline);
+        }
 
         [Fact]
         public void CanCreatePipelineUsingExtensions()
@@ -62,8 +81,8 @@ namespace Endpoints.Test
             services.RegisterRetrievePipeline<ModelRequest, ModelResponse>(
                 ModelParser.FromBody,
                 ModelParser.SetFromModelResponse
-                // builder => builder.WithStage<TimingPipelineStage>()
-                //                   .WithStage<GetModelFromDatabase>()
+            // builder => builder.WithStage<TimingPipelineStage>()
+            //                   .WithStage<GetModelFromDatabase>()
             );
 
             services.AddTransient<DatabaseRetriever>();
@@ -76,6 +95,22 @@ namespace Endpoints.Test
             // Assert
             var pipeline = registry.GetRetrieve<DatabaseRetriever, ModelRequest, ModelResponse>();
             Assert.NotNull(pipeline);
+        }
+    }
+
+    internal class TimingMiddleware : MiddlewareBase<ModelResponse>
+    {
+        public TimingMiddleware(MiddlewareBase<ModelResponse> next) : base(next)
+        {
+        }
+
+        protected async override Task<ModelResponse> RunInner(Func<Task<ModelResponse>> func)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var r = await func();
+            System.Console.WriteLine($"Command took {stopwatch.ElapsedMilliseconds}ms");
+
+            return r;
         }
     }
 

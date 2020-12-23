@@ -81,7 +81,7 @@ namespace Endpoints.Extensions
             where TRetriever : IRetriever<TIn, TOut>
         {
             var instructions = _serviceProvider.GetRequiredService<RetrievePipelineInstructions<TIn, TOut>>();
-            var (pipeline, ok) = RetrievePipelineBuilder.TryGetPipeline<TRetriever, TIn, TOut>(instructions, _serviceProvider);
+            var (pipeline, ok) = instructions.TryGetPipeline<TRetriever, TIn, TOut>(_serviceProvider);
             if (!ok)
                 throw new Exception("Could not create pipeline");
 
