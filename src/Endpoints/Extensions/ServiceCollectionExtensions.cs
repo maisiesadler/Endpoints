@@ -47,11 +47,15 @@ namespace Endpoints.Extensions
         public static IServiceCollection RegisterRetrievePipeline<TIn, TOut>(
            this IServiceCollection services,
            Func<HttpContext, TIn> parseModel,
-           Func<HttpContext, TOut, Task> parseResponse)
+           Func<HttpContext, TOut, Task> parseResponse,
+           Action<RetrievePipelineInstructions<TIn, TOut>> builder = null)
         {
             var instructions = new RetrievePipelineInstructions<TIn, TOut>(
                 parseModel, parseResponse
             );
+
+            if (builder != null)
+                builder(instructions);
 
             services.AddSingleton(instructions);
 

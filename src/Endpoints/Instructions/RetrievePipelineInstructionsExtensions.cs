@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Endpoints.Pipelines;
 using System;
+using System.Collections.Generic;
 
 namespace Endpoints.Instructions
 {
@@ -25,19 +26,23 @@ namespace Endpoints.Instructions
         }
 
         public static Middleware<TOut> BuildMiddleware<TIn, TOut>(
-            this RetrievePipelineInstructions<TIn, TOut> instructions,
+            this RetrievePipelineInstructions<TIn, TOut> instructions, IServiceProvider sp)
+            => BuildMiddleware(instructions.MiddlewareFunction, sp);
+
+        public static Middleware<TOut> BuildMiddleware<TOut>(
+            List<Func<IServiceProvider, IMiddleware<TOut>>> middlewareFunctions,
             IServiceProvider sp)
         {
-            if (instructions.Middleware.Count == 0)
+            if (middlewareFunctions.Count == 0)
                 return new DelegateMiddleware<TOut>();
 
-            var inner = (IMiddleware<TOut>)sp.GetRequiredService(instructions.Middleware[0]);
+            var inner = middlewareFunctions[middlewareFunctions.Count - 1](sp);
             var middleware = new MiddlewareRunner<TOut>(inner, null);
-            for (var i = 1; i < instructions.Middleware.Count; i++)
+            for (var i = middlewareFunctions.Count - 2; i >= 0; i--)
             {
-                var type = instructions.Middleware[i];
-                inner = (IMiddleware<TOut>)sp.GetRequiredService(instructions.Middleware[i]);
-                middleware = new MiddlewareRunner<TOut>(inner, null);
+                var type = middlewareFunctions[i];
+                inner = middlewareFunctions[i](sp);
+                middleware = new MiddlewareRunner<TOut>(inner, middleware);
             }
 
             return middleware;

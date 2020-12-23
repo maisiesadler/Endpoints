@@ -22,15 +22,19 @@ namespace Endpoints.Api
             services.AddRouting();
 
             services.AddSingleton<IDbThing, DbThing>();
+            services.AddSingleton<CreateModelRetriever>();
+            services.AddSingleton<MyModelRetriever>();
+            services.AddSingleton<TimingMiddleware>();
+            services.AddSingleton<ExceptionHandlingMiddleware>();
 
             services.AddPipelines();
             services.RegisterRetrievePipeline<ModelRequest, ModelResponse>(
                 MyModelRetriever.ParseModel,
-                MyModelRetriever.ParseResponse
+                MyModelRetriever.ParseResponse,
+                builder => builder
+                    .WithMiddleware<ExceptionHandlingMiddleware>()
+                    .WithMiddleware<TimingMiddleware>()
             );
-                // builder => builder.WithStage<TimingPipelineStage>()
-                //     .WithStage<ExceptionHandlingPipelineStage>()
-                //     .WithStage<GetModelFromDatabase>());
 
             services.RegisterRetrievePipeline<ModelRequest, PipelineResponse<CreateModelRetriever.Response>>(
                 CreateModelRetriever.ParseModel,
