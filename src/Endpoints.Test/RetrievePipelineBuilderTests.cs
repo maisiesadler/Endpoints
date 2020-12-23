@@ -43,15 +43,19 @@ namespace Endpoints.Test
                 ModelParser.SetFromModelResponse)
                 .WithMiddleware<TimingMiddleware>();
 
+            var services = new ServiceCollection();
+            services.AddTransient<TimingMiddleware>();
+            var sp = services.BuildServiceProvider();
+
             // Act
-            var middleware = instructions.BuildMiddleware();
+            var middleware = instructions.BuildMiddleware(sp);
 
             // Assert
             Assert.NotNull(middleware);
         }
 
         [Fact]
-        public void CanBuildPipelineWithStages()
+        public void CanBuildPipelineWithMiddleware()
         {
             // Arrange
             var instructions = new RetrievePipelineInstructions<ModelRequest, ModelResponse>(
@@ -60,6 +64,7 @@ namespace Endpoints.Test
                 .WithMiddleware<TimingMiddleware>();
 
             var services = new ServiceCollection();
+            services.AddTransient<TimingMiddleware>();
             services.AddTransient<DatabaseRetriever>();
             services.AddTransient<IDbThing, DbThing>();
             var sp = services.BuildServiceProvider();
@@ -98,13 +103,9 @@ namespace Endpoints.Test
         }
     }
 
-    internal class TimingMiddleware : MiddlewareBase<ModelResponse>
+    internal class TimingMiddleware : IMiddleware<ModelResponse>
     {
-        public TimingMiddleware(MiddlewareBase<ModelResponse> next) : base(next)
-        {
-        }
-
-        protected async override Task<ModelResponse> RunInner(Func<Task<ModelResponse>> func)
+        public async Task<ModelResponse> Run(Func<Task<ModelResponse>> func)
         {
             var stopwatch = Stopwatch.StartNew();
             var r = await func();

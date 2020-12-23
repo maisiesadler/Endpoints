@@ -17,7 +17,7 @@ namespace Endpoints.Instructions
             }
 
             var retriever = sp.GetRequiredService<TRetriever>();
-            var middleware = BuildMiddleware(instructions);
+            var middleware = BuildMiddleware(instructions, sp);
             var pipeline = new RetrievePipeline<TIn, TOut>(
                 instructions.ParseModel, instructions.ParseResponse, retriever, middleware);
 
@@ -25,16 +25,19 @@ namespace Endpoints.Instructions
         }
 
         public static Middleware<TOut> BuildMiddleware<TIn, TOut>(
-            this RetrievePipelineInstructions<TIn, TOut> instructions)
+            this RetrievePipelineInstructions<TIn, TOut> instructions,
+            IServiceProvider sp)
         {
             if (instructions.Middleware.Count == 0)
                 return new DelegateMiddleware<TOut>();
 
-            var middleware = (Middleware<TOut>)Activator.CreateInstance(instructions.Middleware[0], (MiddlewareBase<TOut>)null);
+            var inner = (IMiddleware<TOut>)sp.GetRequiredService(instructions.Middleware[0]);
+            var middleware = new MiddlewareRunner<TOut>(inner, null);
             for (var i = 1; i < instructions.Middleware.Count; i++)
             {
                 var type = instructions.Middleware[i];
-                middleware = (Middleware<TOut>)Activator.CreateInstance(type, middleware);
+                inner = (IMiddleware<TOut>)sp.GetRequiredService(instructions.Middleware[i]);
+                middleware = new MiddlewareRunner<TOut>(inner, null);
             }
 
             return middleware;

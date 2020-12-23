@@ -40,4 +40,25 @@ namespace Endpoints.Pipelines
 
         protected abstract Task<TOut> RunInner(Func<Task<TOut>> func);
     }
+
+    public interface IMiddleware<TOut>
+    {
+        Task<TOut> Run(Func<Task<TOut>> func);
+    }
+
+    public class MiddlewareRunner<TOut> : MiddlewareBase<TOut>
+    {
+        private readonly IMiddleware<TOut> _middleware;
+
+        public MiddlewareRunner(IMiddleware<TOut> middleware, MiddlewareBase<TOut> next)
+            : base(next)
+        {
+            _middleware = middleware;
+        }
+
+        protected async override Task<TOut> RunInner(Func<Task<TOut>> func)
+        {
+            return await _middleware.Run(func);
+        }
+    }
 }

@@ -34,7 +34,7 @@ namespace Endpoints.Instructions
         }
 
         public RetrievePipelineInstructions<TIn, TOut> WithMiddleware<TMiddleware>()
-            where TMiddleware : Middleware<TOut>
+            where TMiddleware : IMiddleware<TOut>
         {
             Middleware.Add(typeof(TMiddleware));
             return this;
