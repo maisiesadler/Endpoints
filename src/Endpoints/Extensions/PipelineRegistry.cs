@@ -19,35 +19,48 @@ namespace Endpoints.Extensions
         public RequestDelegate Get<TRetriever, TIn, TOut>()
             where TRetriever : IRetriever<TIn, TOut>
         {
-            var instructions = _serviceProvider.GetRequiredService<PipelineInstructions<TIn, TOut>>();
-            var (pipeline, ok) = instructions.TryGetPipeline<TRetriever, TIn, TOut>(_serviceProvider);
-            if (!ok)
-                throw new Exception("Could not create pipeline");
+            return async ctx =>
+            {
+                var instructions = _serviceProvider.GetRequiredService<PipelineInstructions<TIn, TOut>>();
+                var retriever = _serviceProvider.GetRequiredService<TRetriever>();
 
-            return pipeline.Run;
+                var (pipeline, ok) = instructions.TryGetPipeline<TIn, TOut>(_serviceProvider);
+                if (!ok)
+                    throw new Exception("Could not create pipeline");
+
+                await pipeline.Run(retriever, ctx);
+            };
         }
 
         public RequestDelegate Get<TIn, TOut>(Func<IServiceProvider, Func<TIn, Task<TOut>>> retrieverFn)
         {
-            var instructions = _serviceProvider.GetRequiredService<PipelineInstructions<TIn, TOut>>();
-            var retriever = retrieverFn(_serviceProvider);
-            var (pipeline, ok) = instructions.TryGetPipeline<TIn, TOut>(retriever, _serviceProvider);
-            if (!ok)
-                throw new Exception("Could not create pipeline");
+            return async ctx =>
+            {
+                var instructions = _serviceProvider.GetRequiredService<PipelineInstructions<TIn, TOut>>();
+                var retriever = retrieverFn(_serviceProvider);
 
-            return pipeline.Run;
+                var (pipeline, ok) = instructions.TryGetPipeline<TIn, TOut>(_serviceProvider);
+                if (!ok)
+                    throw new Exception("Could not create pipeline");
+
+                await pipeline.Run(new FuncRetriever<TIn, TOut>(retriever), ctx);
+            };
         }
 
         public RequestDelegate Get<TService, TIn, TOut>(Func<TService, Func<TIn, Task<TOut>>> retrieverFn)
         {
-            var instructions = _serviceProvider.GetRequiredService<PipelineInstructions<TIn, TOut>>();
-            var service = _serviceProvider.GetRequiredService<TService>();
-            var retriever = retrieverFn(service);
-            var (pipeline, ok) = instructions.TryGetPipeline<TIn, TOut>(retriever, _serviceProvider);
-            if (!ok)
-                throw new Exception("Could not create pipeline");
+            return async ctx =>
+            {
+                var instructions = _serviceProvider.GetRequiredService<PipelineInstructions<TIn, TOut>>();
+                var service = _serviceProvider.GetRequiredService<TService>();
+                var retriever = retrieverFn(service);
 
-            return pipeline.Run;
+                var (pipeline, ok) = instructions.TryGetPipeline<TIn, TOut>(_serviceProvider);
+                if (!ok)
+                    throw new Exception("Could not create pipeline");
+
+                await pipeline.Run(new FuncRetriever<TIn, TOut>(retriever), ctx);
+            };
         }
     }
 }

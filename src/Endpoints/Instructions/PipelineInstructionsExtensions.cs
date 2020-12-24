@@ -8,26 +8,8 @@ namespace Endpoints.Instructions
 {
     public static class PipelineInstructionsExtensions
     {
-        public static (Pipeline<TIn, TOut>, bool) TryGetPipeline<TRetriever, TIn, TOut>(
-            this PipelineInstructions<TIn, TOut> instructions,
-            IServiceProvider sp)
-            where TRetriever : IRetriever<TIn, TOut>
-        {
-            var retriever = sp.GetRequiredService<TRetriever>();
-            return instructions.TryGetPipeline(retriever, sp);
-        }
-
         public static (Pipeline<TIn, TOut>, bool) TryGetPipeline<TIn, TOut>(
             this PipelineInstructions<TIn, TOut> instructions,
-            Func<TIn, Task<TOut>> retriever,
-            IServiceProvider sp)
-        {
-            return instructions.TryGetPipeline(new FuncRetriever<TIn, TOut>(retriever), sp);
-        }
-
-        private static (Pipeline<TIn, TOut>, bool) TryGetPipeline<TIn, TOut>(
-            this PipelineInstructions<TIn, TOut> instructions,
-            IRetriever<TIn, TOut> retriever,
             IServiceProvider sp)
         {
             if (!instructions.Validate())
@@ -37,7 +19,7 @@ namespace Endpoints.Instructions
 
             var middleware = BuildMiddleware(instructions, sp);
             var pipeline = new Pipeline<TIn, TOut>(
-                instructions.ParseModel, instructions.ParseResponse, retriever, middleware);
+                instructions.ParseModel, instructions.ParseResponse, middleware);
 
             return (pipeline, true);
         }

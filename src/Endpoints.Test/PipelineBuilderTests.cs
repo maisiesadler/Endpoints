@@ -25,12 +25,10 @@ namespace Endpoints.Test
                 ModelParser.SetFromModelResponse);
 
             var services = new ServiceCollection();
-            services.AddTransient<DatabaseRetriever>();
-            services.AddTransient<IDbThing, DbThing>();
             var sp = services.BuildServiceProvider();
 
             // Act
-            var (pipeline, ok) = instructions.TryGetPipeline<DatabaseRetriever, ModelRequest, ModelResponse>(sp);
+            var (pipeline, ok) = instructions.TryGetPipeline<ModelRequest, ModelResponse>(sp);
 
             // Assert
             Assert.True(ok);
@@ -109,12 +107,10 @@ namespace Endpoints.Test
 
             var services = new ServiceCollection();
             services.AddTransient<TimingMiddleware>();
-            services.AddTransient<DatabaseRetriever>();
-            services.AddTransient<IDbThing, DbThing>();
             var sp = services.BuildServiceProvider();
 
             // Act
-            var (pipeline, ok) = instructions.TryGetPipeline<DatabaseRetriever, ModelRequest, ModelResponse>(sp);
+            var (pipeline, ok) = instructions.TryGetPipeline<ModelRequest, ModelResponse>(sp);
 
             // Assert
             Assert.True(ok);
