@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Endpoints.Api.Pipelines
 {
-    public class CreateModelRetriever : IRetriever<ModelRequest, PipelineResponse<CreateModelRetriever.Response>>
+    public class CreateModelRetriever : IRetriever<ModelRequest, CreateModelRetriever.Response>
     {
         public Task<PipelineResponse<CreateModelRetriever.Response>> Retrieve(ModelRequest input)
         {

@@ -5,17 +5,17 @@ namespace Endpoints.Pipelines
 {
     public interface Middleware<TOut>
     {
-        Task<TOut> Run(Func<Task<TOut>> func);
+        Task<PipelineResponse<TOut>> Run(Func<Task<PipelineResponse<TOut>>> func);
     }
 
     public class DelegateMiddleware<TOut> : Middleware<TOut>
     {
-        public async Task<TOut> Run(Func<Task<TOut>> func) => await func();
+        public async Task<PipelineResponse<TOut>> Run(Func<Task<PipelineResponse<TOut>>> func) => await func();
     }
 
     public interface IMiddleware<TOut>
     {
-        Task<TOut> Run(Func<Task<TOut>> func);
+        Task<PipelineResponse<TOut>> Run(Func<Task<PipelineResponse<TOut>>> func);
     }
 
     public sealed class MiddlewareRunner<TOut> : Middleware<TOut>
@@ -29,7 +29,7 @@ namespace Endpoints.Pipelines
             _next = next;
         }
 
-        public async Task<TOut> Run(Func<Task<TOut>> func)
+        public async Task<PipelineResponse<TOut>> Run(Func<Task<PipelineResponse<TOut>>> func)
         {
             return await RunInner(
                 async () =>
@@ -45,7 +45,7 @@ namespace Endpoints.Pipelines
                 });
         }
 
-        private async Task<TOut> RunInner(Func<Task<TOut>> func)
+        private async Task<PipelineResponse<TOut>> RunInner(Func<Task<PipelineResponse<TOut>>> func)
         {
             return await _middleware.Run(func);
         }

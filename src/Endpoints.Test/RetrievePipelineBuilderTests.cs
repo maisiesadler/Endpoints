@@ -84,7 +84,7 @@ namespace Endpoints.Test
             var sp = services.BuildServiceProvider();
             var middleware = RetrievePipelineInstructionsExtensions.BuildMiddleware(middlewares, sp);
 
-            var runFunction = new Mock<Func<Task<ModelResponse>>>();
+            var runFunction = new Mock<Func<Task<PipelineResponse<ModelResponse>>>>();
 
             // Act
             await Assert.ThrowsAsync<Exception>(async () => await middleware.Run(runFunction.Object));
@@ -148,7 +148,7 @@ namespace Endpoints.Test
 
     internal class TimingMiddleware : IMiddleware<ModelResponse>
     {
-        public async Task<ModelResponse> Run(Func<Task<ModelResponse>> func)
+        public async Task<PipelineResponse<ModelResponse>> Run(Func<Task<PipelineResponse<ModelResponse>>> func)
         {
             var stopwatch = Stopwatch.StartNew();
             var r = await func();
@@ -169,7 +169,7 @@ namespace Endpoints.Test
             _after = after;
         }
 
-        public async Task<ModelResponse> Run(Func<Task<ModelResponse>> func)
+        public async Task<PipelineResponse<ModelResponse>> Run(Func<Task<PipelineResponse<ModelResponse>>> func)
         {
             _before();
             var r = await func();
@@ -188,9 +188,10 @@ namespace Endpoints.Test
             _dbThing = dbThing;
         }
 
-        public async Task<ModelResponse> Retrieve(ModelRequest input)
+        public async Task<PipelineResponse<ModelResponse>> Retrieve(ModelRequest input)
         {
-            return await _dbThing.GetModel(input);
+            var result = await _dbThing.GetModel(input);
+            return PipelineResponse.Ok(result);
         }
     }
 
@@ -201,7 +202,7 @@ namespace Endpoints.Test
             throw new NotImplementedException();
         }
 
-        internal static Task SetFromModelResponse(HttpContext arg1, ModelResponse arg2)
+        internal static Task SetFromModelResponse(HttpContext arg1, PipelineResponse<ModelResponse> arg2)
         {
             throw new NotImplementedException();
         }

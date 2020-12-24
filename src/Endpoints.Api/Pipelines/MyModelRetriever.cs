@@ -14,9 +14,10 @@ namespace Endpoints.Api.Pipelines
             _dbThing = dbThing;
         }
 
-        public async Task<ModelResponse> Retrieve(ModelRequest input)
+        public async Task<PipelineResponse<ModelResponse>> Retrieve(ModelRequest input)
         {
-            return await _dbThing.GetModel(input);
+            var result = await _dbThing.GetModel(input);
+            return PipelineResponse.Ok(result);
         }
 
         public static ModelRequest ParseModel(HttpContext context)
@@ -27,10 +28,17 @@ namespace Endpoints.Api.Pipelines
             };
         }
 
-        public static async Task ParseResponse(HttpContext context, ModelResponse response)
+        public static async Task ParseResponse(HttpContext context, PipelineResponse<ModelResponse> response)
         {
-            context.Response.StatusCode = (int)HttpStatusCode.OK;
-            await context.Response.WriteAsync(response.Name);
+            if (response.Success)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.OK;
+                await context.Response.WriteAsync(response.Result.Name);
+            }
+            else
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            }
         }
     }
 }

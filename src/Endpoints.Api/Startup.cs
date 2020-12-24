@@ -36,7 +36,7 @@ namespace Endpoints.Api
                     .WithMiddleware<TimingMiddleware>()
             );
 
-            services.RegisterRetrievePipeline<ModelRequest, PipelineResponse<CreateModelRetriever.Response>>(
+            services.RegisterRetrievePipeline<ModelRequest, CreateModelRetriever.Response>(
                 CreateModelRetriever.ParseModel,
                 CreateModelRetriever.ParseResponse
             );
@@ -50,7 +50,7 @@ namespace Endpoints.Api
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
 
-                endpoints.MapPost("/testing", registry.GetRetrieve<CreateModelRetriever, ModelRequest, PipelineResponse<CreateModelRetriever.Response>>());
+                endpoints.MapPost("/testing", registry.GetRetrieve<CreateModelRetriever, ModelRequest, CreateModelRetriever.Response>());
                 endpoints.MapGet("/testing/{id}", registry.GetRetrieve<MyModelRetriever, ModelRequest, ModelResponse>());
             });
         }

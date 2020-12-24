@@ -28,9 +28,10 @@ namespace Endpoints.Test
                 _dbThing = dbThing;
             }
 
-            public async Task<ModelResponse> Retrieve(ModelRequest input)
+            public async Task<PipelineResponse<ModelResponse>> Retrieve(ModelRequest input)
             {
-                return await _dbThing.GetModel(input);
+                var result = await _dbThing.GetModel(input);
+                return PipelineResponse.Ok(result);
             }
         }
 
@@ -135,14 +136,14 @@ namespace Endpoints.Test
 
         public class ModelFromTwoIdsRetriever : IRetriever<TwoIdsModelRequest, ModelResponse>
         {
-            public Task<ModelResponse> Retrieve(TwoIdsModelRequest input)
+            public Task<PipelineResponse<ModelResponse>> Retrieve(TwoIdsModelRequest input)
             {
                 var response = new ModelResponse
                 {
                     Name = $"Id = {input.Id}, Id2 = {input.Id2}",
                 };
 
-                return Task.FromResult(response);
+                return Task.FromResult(PipelineResponse.Ok(response));
             }
         }
 

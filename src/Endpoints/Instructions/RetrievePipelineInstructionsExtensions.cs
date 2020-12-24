@@ -76,9 +76,10 @@ namespace Endpoints.Instructions
             _retriever = retriever;
         }
 
-        public async Task<TOut> Retrieve(TIn input)
+        public async Task<PipelineResponse<TOut>> Retrieve(TIn input)
         {
-            return await _retriever(input);
+            var result = await _retriever(input);
+            return PipelineResponse.Ok(result);
         }
     }
 }

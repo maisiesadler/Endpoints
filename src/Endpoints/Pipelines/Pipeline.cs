@@ -28,13 +28,13 @@ namespace Endpoints.Pipelines
     public class RetrievePipeline<TIn, TOut>
     {
         private readonly Func<HttpContext, Task<TIn>> _parseModel;
-        private readonly Func<HttpContext, TOut, Task> _parseResponse;
+        private readonly Func<HttpContext, PipelineResponse<TOut>, Task> _parseResponse;
         private readonly IRetriever<TIn, TOut> _retriever;
         private readonly Middleware<TOut> _middleware;
 
         public RetrievePipeline(
             Func<HttpContext, Task<TIn>> parseModel,
-            Func<HttpContext, TOut, Task> parseResponse,
+            Func<HttpContext, PipelineResponse<TOut>, Task> parseResponse,
             IRetriever<TIn, TOut> retriever,
             Middleware<TOut> middleware)
         {
@@ -56,7 +56,7 @@ namespace Endpoints.Pipelines
 
     public interface IRetriever<TIn, TOut>
     {
-        Task<TOut> Retrieve(TIn input);
+        Task<PipelineResponse<TOut>> Retrieve(TIn input);
     }
 
     public abstract class Pipeline<TIn, TOut, TError> : Pipeline<TIn, PipelineResponse<TOut, TError>>

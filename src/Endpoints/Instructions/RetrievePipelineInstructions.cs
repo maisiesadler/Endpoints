@@ -10,17 +10,17 @@ namespace Endpoints.Instructions
     public class RetrievePipelineInstructions<TIn, TOut>
     {
         public Func<HttpContext, Task<TIn>> ParseModel { get; }
-        public Func<HttpContext, TOut, Task> ParseResponse { get; }
+        public Func<HttpContext, PipelineResponse<TOut>, Task> ParseResponse { get; }
         public List<Func<IServiceProvider, IMiddleware<TOut>>> MiddlewareFunction { get; } = new List<Func<IServiceProvider, IMiddleware<TOut>>>();
 
         public RetrievePipelineInstructions(
             Func<HttpContext, Task<TIn>> parseModel,
-            Func<HttpContext, TOut, Task> parseResponse)
+            Func<HttpContext, PipelineResponse<TOut>, Task> parseResponse)
             => (ParseModel, ParseResponse) = (parseModel, parseResponse);
 
         public RetrievePipelineInstructions(
             Func<HttpContext, TIn> parseModel,
-            Func<HttpContext, TOut, Task> parseResponse)
+            Func<HttpContext, PipelineResponse<TOut>, Task> parseResponse)
             => (ParseModel, ParseResponse) = (WrapParseModel(parseModel), parseResponse);
 
         private Func<HttpContext, Task<TIn>> WrapParseModel(Func<HttpContext, TIn> parseModel)

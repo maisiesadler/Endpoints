@@ -234,9 +234,10 @@ namespace Endpoints.Test
                 _database = database;
             }
 
-            public async Task<CrudId> Retrieve(CrudModel input)
+            public async Task<PipelineResponse<CrudId>> Retrieve(CrudModel input)
             {
-                return await _database.Create(input);
+                var result = await _database.Create(input);
+                return PipelineResponse.Ok(result);
             }
         }
 
@@ -249,9 +250,10 @@ namespace Endpoints.Test
                 _database = database;
             }
 
-            public async Task<CrudModel> Retrieve(CrudId input)
+            public async Task<PipelineResponse<CrudModel>> Retrieve(CrudId input)
             {
-                return await _database.Read(input);
+                var result = await _database.Read(input);
+                return PipelineResponse.Ok(result);
             }
         }
 
@@ -264,10 +266,10 @@ namespace Endpoints.Test
                 _database = database;
             }
 
-            public async Task<bool> Retrieve(UpdateCrudModelRequest input)
+            public async Task<PipelineResponse<bool>> Retrieve(UpdateCrudModelRequest input)
             {
                 await _database.Update(input.Id, input.Model);
-                return true;
+                return PipelineResponse.Ok(true);
             }
         }
 
@@ -280,10 +282,10 @@ namespace Endpoints.Test
                 _database = database;
             }
 
-            public async Task<bool> Retrieve(CrudId input)
+            public async Task<PipelineResponse<bool>> Retrieve(CrudId input)
             {
                 await _database.Delete(input);
-                return true;
+                return PipelineResponse.Ok(true);
             }
 
             protected CrudId Retrieve(HttpContext context)
