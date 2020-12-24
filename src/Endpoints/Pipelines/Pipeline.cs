@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
@@ -57,25 +56,6 @@ namespace Endpoints.Pipelines
     public interface IRetriever<TIn, TOut>
     {
         Task<PipelineResponse<TOut>> Retrieve(TIn input);
-    }
-
-    public abstract class Pipeline<TIn, TOut, TError> : Pipeline<TIn, PipelineResponse<TOut, TError>>
-    {
-        protected abstract Task<TError> ParseErrorResponse(TIn input, Exception exception);
-        protected abstract Task<TOut> TryGetResponse(TIn input);
-        protected async override Task<PipelineResponse<TOut, TError>> GetResponse(TIn input)
-        {
-            try
-            {
-                var response = await TryGetResponse(input);
-                return PipelineResponse.Ok<TOut, TError>(response);
-            }
-            catch (Exception ex)
-            {
-                var error = await ParseErrorResponse(input, ex);
-                return PipelineResponse.Fail<TOut, TError>(error);
-            }
-        }
     }
 
     public class PipelineResponse<TResult> : PipelineResponse<TResult, PipelineResponseError>
