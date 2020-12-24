@@ -4,7 +4,7 @@ Endpoints provides a more friendly way to set up functions for using AspNetCore 
 
 ## Aims
 
-- Main handlers shouldn't know anything about Http Request
+- Business logic shouldn't know anything about Http Request
 - Clear in tests what has been registered and what endpoints are being used
 - Few dependencies
 - Easy to extend
