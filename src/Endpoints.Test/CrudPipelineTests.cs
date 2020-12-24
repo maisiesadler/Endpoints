@@ -14,11 +14,11 @@ using Microsoft.AspNetCore.TestHost;
 
 namespace Endpoints.Test
 {
-    public class CrudRetrievePipelineTests : IClassFixture<TestFixture>
+    public class CrudPipelineTests : IClassFixture<TestFixture>
     {
         private readonly TestFixture _fixture;
 
-        public CrudRetrievePipelineTests(TestFixture fixture)
+        public CrudPipelineTests(TestFixture fixture)
         {
             _fixture = fixture;
         }
