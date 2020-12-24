@@ -28,7 +28,7 @@ namespace Endpoints.Api
             services.AddSingleton<ExceptionHandlingMiddleware>();
 
             services.AddPipelines();
-            services.RegisterRetrievePipeline<ModelRequest, ModelResponse>(
+            services.AddPipeline<ModelRequest, ModelResponse>(
                 MyModelRetriever.ParseModel,
                 MyModelRetriever.ParseResponse,
                 builder => builder
@@ -36,7 +36,7 @@ namespace Endpoints.Api
                     .WithMiddleware<TimingMiddleware>()
             );
 
-            services.RegisterRetrievePipeline<ModelRequest, CreateModelRetriever.Response>(
+            services.AddPipeline<ModelRequest, CreateModelRetriever.Response>(
                 CreateModelRetriever.ParseModel,
                 CreateModelRetriever.ParseResponse
             );
@@ -50,8 +50,8 @@ namespace Endpoints.Api
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
 
-                endpoints.MapPost("/testing", registry.GetRetrieve<CreateModelRetriever, ModelRequest, CreateModelRetriever.Response>());
-                endpoints.MapGet("/testing/{id}", registry.GetRetrieve<MyModelRetriever, ModelRequest, ModelResponse>());
+                endpoints.MapPost("/testing", registry.Get<CreateModelRetriever, ModelRequest, CreateModelRetriever.Response>());
+                endpoints.MapGet("/testing/{id}", registry.Get<MyModelRetriever, ModelRequest, ModelResponse>());
             });
         }
     }

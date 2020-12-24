@@ -36,19 +36,19 @@ namespace Endpoints.Test
                 services.AddTransient<DeleteCrudModelRetriever>();
 
                 services.AddPipelines();
-                services.RegisterRetrievePipeline<CrudModel, CrudId>(
+                services.AddPipeline<CrudModel, CrudId>(
                     ModelParser.GetModelFromBody,
                     ModelParser.SetResponseFromId
                 );
-                services.RegisterRetrievePipeline<CrudId, CrudModel>(
+                services.AddPipeline<CrudId, CrudModel>(
                     ModelParser.GetIdFromPath,
                     ModelParser.SetJsonResponse
                 );
-                services.RegisterRetrievePipeline<UpdateCrudModelRequest, bool>(
+                services.AddPipeline<UpdateCrudModelRequest, bool>(
                     ModelParser.GetUpdateCrudModelRequest,
                     ModelParser.SuccessfulResponse
                 );
-                services.RegisterRetrievePipeline<CrudId, bool>(
+                services.AddPipeline<CrudId, bool>(
                     ModelParser.GetIdFromPath,
                     ModelParser.SuccessfulResponse
                 );
@@ -56,10 +56,10 @@ namespace Endpoints.Test
             app => app.UseEndpoints(endpoints =>
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapPost("/model", registry.GetRetrieve<CreateCrudModelRetriever, CrudModel, CrudId>());
-                endpoints.MapGet("/model/{id}", registry.GetRetrieve<CrudId, CrudModel>(sp => sp.GetRequiredService<IDatabase<CrudId, CrudModel>>().Read));
-                endpoints.MapPut("/model/{id}", registry.GetRetrieve<UpdateCrudModelRetriever, UpdateCrudModelRequest, bool>());
-                endpoints.MapDelete("/model/{id}", registry.GetRetrieve<DeleteCrudModelRetriever, CrudId, bool>());
+                endpoints.MapPost("/model", registry.Get<CreateCrudModelRetriever, CrudModel, CrudId>());
+                endpoints.MapGet("/model/{id}", registry.Get<CrudId, CrudModel>(sp => sp.GetRequiredService<IDatabase<CrudId, CrudModel>>().Read));
+                endpoints.MapPut("/model/{id}", registry.Get<UpdateCrudModelRetriever, UpdateCrudModelRequest, bool>());
+                endpoints.MapDelete("/model/{id}", registry.Get<DeleteCrudModelRetriever, CrudId, bool>());
             }));
         }
 

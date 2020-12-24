@@ -76,7 +76,7 @@ namespace Endpoints.Test
                 services.AddSingleton<IDbThing>(dbThing.Object);
                 services.AddTransient<TestGetRetriever>();
                 services.AddPipelines();
-                services.RegisterRetrievePipeline<ModelRequest, ModelResponse>(
+                services.AddPipeline<ModelRequest, ModelResponse>(
                     TestGetRetriever.ParseModel,
                     TestGetRetriever.ParseResponse
                 );
@@ -84,7 +84,7 @@ namespace Endpoints.Test
             app => app.UseEndpoints(endpoints =>
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapGet("/test", registry.GetRetrieve<TestGetRetriever, ModelRequest, ModelResponse>());
+                endpoints.MapGet("/test", registry.Get<TestGetRetriever, ModelRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 
@@ -111,7 +111,7 @@ namespace Endpoints.Test
                 services.AddSingleton<IDbThing>(dbThing.Object);
                 services.AddTransient<TestGetRetriever>();
                 services.AddPipelines();
-                services.RegisterRetrievePipeline<ModelRequest, ModelResponse>(
+                services.AddPipeline<ModelRequest, ModelResponse>(
                     TestGetRetriever.ParseModel,
                     TestGetRetriever.ParseResponse
                 );
@@ -119,7 +119,7 @@ namespace Endpoints.Test
             app => app.UseEndpoints(endpoints =>
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapGet("/test", registry.GetRetrieve<TestGetRetriever, ModelRequest, ModelResponse>());
+                endpoints.MapGet("/test", registry.Get<TestGetRetriever, ModelRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 

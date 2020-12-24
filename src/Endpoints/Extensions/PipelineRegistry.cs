@@ -16,10 +16,10 @@ namespace Endpoints.Extensions
             _serviceProvider = serviceProvider;
         }
 
-        public RequestDelegate GetRetrieve<TRetriever, TIn, TOut>()
+        public RequestDelegate Get<TRetriever, TIn, TOut>()
             where TRetriever : IRetriever<TIn, TOut>
         {
-            var instructions = _serviceProvider.GetRequiredService<RetrievePipelineInstructions<TIn, TOut>>();
+            var instructions = _serviceProvider.GetRequiredService<PipelineInstructions<TIn, TOut>>();
             var (pipeline, ok) = instructions.TryGetPipeline<TRetriever, TIn, TOut>(_serviceProvider);
             if (!ok)
                 throw new Exception("Could not create pipeline");
@@ -27,9 +27,9 @@ namespace Endpoints.Extensions
             return pipeline.Run;
         }
 
-        public RequestDelegate GetRetrieve<TIn, TOut>(Func<IServiceProvider, Func<TIn, Task<TOut>>> retrieverFn)
+        public RequestDelegate Get<TIn, TOut>(Func<IServiceProvider, Func<TIn, Task<TOut>>> retrieverFn)
         {
-            var instructions = _serviceProvider.GetRequiredService<RetrievePipelineInstructions<TIn, TOut>>();
+            var instructions = _serviceProvider.GetRequiredService<PipelineInstructions<TIn, TOut>>();
             var retriever = retrieverFn(_serviceProvider);
             var (pipeline, ok) = instructions.TryGetPipeline<TIn, TOut>(retriever, _serviceProvider);
             if (!ok)

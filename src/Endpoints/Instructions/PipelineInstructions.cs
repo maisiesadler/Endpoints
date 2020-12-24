@@ -7,18 +7,18 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Endpoints.Instructions
 {
-    public class RetrievePipelineInstructions<TIn, TOut>
+    public class PipelineInstructions<TIn, TOut>
     {
         public Func<HttpContext, Task<TIn>> ParseModel { get; }
         public Func<HttpContext, PipelineResponse<TOut>, Task> ParseResponse { get; }
         public List<Func<IServiceProvider, IMiddleware<TOut>>> MiddlewareFunction { get; } = new List<Func<IServiceProvider, IMiddleware<TOut>>>();
 
-        public RetrievePipelineInstructions(
+        public PipelineInstructions(
             Func<HttpContext, Task<TIn>> parseModel,
             Func<HttpContext, PipelineResponse<TOut>, Task> parseResponse)
             => (ParseModel, ParseResponse) = (parseModel, parseResponse);
 
-        public RetrievePipelineInstructions(
+        public PipelineInstructions(
             Func<HttpContext, TIn> parseModel,
             Func<HttpContext, PipelineResponse<TOut>, Task> parseResponse)
             => (ParseModel, ParseResponse) = (WrapParseModel(parseModel), parseResponse);
@@ -34,14 +34,14 @@ namespace Endpoints.Instructions
                 && ParseResponse != null;
         }
 
-        public RetrievePipelineInstructions<TIn, TOut> WithMiddleware<TMiddleware>()
+        public PipelineInstructions<TIn, TOut> WithMiddleware<TMiddleware>()
             where TMiddleware : IMiddleware<TOut>
         {
             MiddlewareFunction.Add(sp => sp.GetRequiredService<TMiddleware>());
             return this;
         }
 
-        public RetrievePipelineInstructions<TIn, TOut> WithMiddleware(IMiddleware<TOut> middleware)
+        public PipelineInstructions<TIn, TOut> WithMiddleware(IMiddleware<TOut> middleware)
         {
             MiddlewareFunction.Add(_ => middleware);
             return this;

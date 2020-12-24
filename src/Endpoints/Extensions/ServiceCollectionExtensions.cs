@@ -17,12 +17,12 @@ namespace Endpoints.Extensions
             return services;
         }
 
-        public static IServiceCollection RegisterRetrievePipeline<TIn, TOut>(
+        public static IServiceCollection AddPipeline<TIn, TOut>(
            this IServiceCollection services,
            Func<HttpContext, Task<TIn>> parseModel,
            Func<HttpContext, PipelineResponse<TOut>, Task> parseResponse)
         {
-            var instructions = new RetrievePipelineInstructions<TIn, TOut>(
+            var instructions = new PipelineInstructions<TIn, TOut>(
                 parseModel, parseResponse
             );
 
@@ -31,12 +31,12 @@ namespace Endpoints.Extensions
             return services;
         }
 
-        public static IServiceCollection RegisterRetrievePipeline<TIn, TOut>(
+        public static IServiceCollection AddPipeline<TIn, TOut>(
            this IServiceCollection services,
            Func<HttpContext, Task<TIn>> parseModel,
            Func<HttpContext, TOut, Task> parseResponse)
         {
-            var instructions = new RetrievePipelineInstructions<TIn, TOut>(
+            var instructions = new PipelineInstructions<TIn, TOut>(
                 parseModel, WrapParseResponse(parseResponse)
             );
 
@@ -45,12 +45,12 @@ namespace Endpoints.Extensions
             return services;
         }
 
-        public static IServiceCollection RegisterRetrievePipeline<TIn, TOut>(
+        public static IServiceCollection AddPipeline<TIn, TOut>(
            this IServiceCollection services,
            Func<HttpContext, TIn> parseModel,
            Func<HttpContext, TOut, Task> parseResponse)
         {
-            var instructions = new RetrievePipelineInstructions<TIn, TOut>(
+            var instructions = new PipelineInstructions<TIn, TOut>(
                 parseModel, WrapParseResponse(parseResponse)
             );
 
@@ -75,13 +75,13 @@ namespace Endpoints.Extensions
             };
         }
 
-        public static IServiceCollection RegisterRetrievePipeline<TIn, TOut>(
+        public static IServiceCollection AddPipeline<TIn, TOut>(
            this IServiceCollection services,
            Func<HttpContext, TIn> parseModel,
            Func<HttpContext, PipelineResponse<TOut>, Task> parseResponse,
-           Action<RetrievePipelineInstructions<TIn, TOut>> builder = null)
+           Action<PipelineInstructions<TIn, TOut>> builder = null)
         {
-            var instructions = new RetrievePipelineInstructions<TIn, TOut>(
+            var instructions = new PipelineInstructions<TIn, TOut>(
                 parseModel, parseResponse
             );
 

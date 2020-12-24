@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Endpoints.Instructions
 {
-    public static class RetrievePipelineInstructionsExtensions
+    public static class PipelineInstructionsExtensions
     {
-        public static (RetrievePipeline<TIn, TOut>, bool) TryGetPipeline<TRetriever, TIn, TOut>(
-            this RetrievePipelineInstructions<TIn, TOut> instructions,
+        public static (Pipeline<TIn, TOut>, bool) TryGetPipeline<TRetriever, TIn, TOut>(
+            this PipelineInstructions<TIn, TOut> instructions,
             IServiceProvider sp)
             where TRetriever : IRetriever<TIn, TOut>
         {
@@ -17,16 +17,16 @@ namespace Endpoints.Instructions
             return instructions.TryGetPipeline(retriever, sp);
         }
 
-        public static (RetrievePipeline<TIn, TOut>, bool) TryGetPipeline<TIn, TOut>(
-            this RetrievePipelineInstructions<TIn, TOut> instructions,
+        public static (Pipeline<TIn, TOut>, bool) TryGetPipeline<TIn, TOut>(
+            this PipelineInstructions<TIn, TOut> instructions,
             Func<TIn, Task<TOut>> retriever,
             IServiceProvider sp)
         {
             return instructions.TryGetPipeline(new FuncRetriever<TIn, TOut>(retriever), sp);
         }
 
-        private static (RetrievePipeline<TIn, TOut>, bool) TryGetPipeline<TIn, TOut>(
-            this RetrievePipelineInstructions<TIn, TOut> instructions,
+        private static (Pipeline<TIn, TOut>, bool) TryGetPipeline<TIn, TOut>(
+            this PipelineInstructions<TIn, TOut> instructions,
             IRetriever<TIn, TOut> retriever,
             IServiceProvider sp)
         {
@@ -36,7 +36,7 @@ namespace Endpoints.Instructions
             }
 
             var middleware = BuildMiddleware(instructions, sp);
-            var pipeline = new RetrievePipeline<TIn, TOut>(
+            var pipeline = new Pipeline<TIn, TOut>(
                 instructions.ParseModel, instructions.ParseResponse, retriever, middleware);
 
             return (pipeline, true);
@@ -44,7 +44,7 @@ namespace Endpoints.Instructions
 
 
         public static Middleware<TOut> BuildMiddleware<TIn, TOut>(
-            this RetrievePipelineInstructions<TIn, TOut> instructions, IServiceProvider sp)
+            this PipelineInstructions<TIn, TOut> instructions, IServiceProvider sp)
             => BuildMiddleware(instructions.MiddlewareFunction, sp);
 
         public static Middleware<TOut> BuildMiddleware<TOut>(

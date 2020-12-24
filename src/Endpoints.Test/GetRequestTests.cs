@@ -61,7 +61,7 @@ namespace Endpoints.Test
                 services.AddSingleton<IDbThing, DbThing>();
                 services.AddTransient<DatabaseRetriever>();
                 services.AddPipelines();
-                services.RegisterRetrievePipeline<ModelRequest, ModelResponse>(
+                services.AddPipeline<ModelRequest, ModelResponse>(
                     ModelParser.ParseModel,
                     ModelParser.ParseResponse
                 );
@@ -69,7 +69,7 @@ namespace Endpoints.Test
             app => app.UseEndpoints(endpoints =>
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapGet("/test", registry.GetRetrieve<DatabaseRetriever, ModelRequest, ModelResponse>());
+                endpoints.MapGet("/test", registry.Get<DatabaseRetriever, ModelRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 
@@ -94,7 +94,7 @@ namespace Endpoints.Test
                 services.AddSingleton<IDbThing, DbThing>();
                 services.AddTransient<DatabaseRetriever>();
                 services.AddPipelines();
-                services.RegisterRetrievePipeline<ModelRequest, ModelResponse>(
+                services.AddPipeline<ModelRequest, ModelResponse>(
                     ModelParser.ParseModel,
                     ModelParser.ParseResponse
                 );
@@ -102,7 +102,7 @@ namespace Endpoints.Test
             app => app.UseEndpoints(endpoints =>
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapGet("/test/{id}", registry.GetRetrieve<DatabaseRetriever, ModelRequest, ModelResponse>());
+                endpoints.MapGet("/test/{id}", registry.Get<DatabaseRetriever, ModelRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 
@@ -156,7 +156,7 @@ namespace Endpoints.Test
                 services.AddSingleton<IDbThing, DbThing>();
                 services.AddTransient<ModelFromTwoIdsRetriever>();
                 services.AddPipelines();
-                services.RegisterRetrievePipeline<TwoIdsModelRequest, ModelResponse>(
+                services.AddPipeline<TwoIdsModelRequest, ModelResponse>(
                     TwoIdsModelParser.ParseModel,
                     ModelParser.ParseResponse
                 );
@@ -164,7 +164,7 @@ namespace Endpoints.Test
             app => app.UseEndpoints(endpoints =>
             {
                 var pipelineRegistry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapGet("/test/{id}/{id2}", pipelineRegistry.GetRetrieve<ModelFromTwoIdsRetriever, TwoIdsModelRequest, ModelResponse>());
+                endpoints.MapGet("/test/{id}/{id2}", pipelineRegistry.Get<ModelFromTwoIdsRetriever, TwoIdsModelRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 
