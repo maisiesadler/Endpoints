@@ -1,9 +1,8 @@
 using System.Net;
 using System.Threading.Tasks;
 using Endpoints.Pipelines;
-using Microsoft.AspNetCore.Http;
 
-namespace Endpoints.Api.Pipelines
+namespace Endpoints.Api.Domain
 {
     public class MyModelRetriever : IRetriever<ModelRequest, ModelResponse>
     {

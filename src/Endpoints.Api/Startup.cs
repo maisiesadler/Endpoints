@@ -1,3 +1,4 @@
+using Endpoints.Api.Domain;
 using Endpoints.Api.Pipelines;
 using Endpoints.Extensions;
 using Microsoft.AspNetCore.Builder;

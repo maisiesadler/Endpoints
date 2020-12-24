@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Endpoints.Api.Pipelines
+namespace Endpoints.Api.Domain
 {
     public interface IDbThing
     {

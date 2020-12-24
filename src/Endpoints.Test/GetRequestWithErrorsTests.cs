@@ -2,13 +2,13 @@ using System.Threading.Tasks;
 using System.Net;
 using Xunit;
 using Microsoft.Extensions.DependencyInjection;
-using Endpoints.Api.Pipelines;
 using Microsoft.AspNetCore.Builder;
 using Endpoints.Pipelines;
 using Microsoft.AspNetCore.Http;
 using System;
 using Moq;
 using Endpoints.Extensions;
+using Endpoints.Api.Domain;
 
 namespace Endpoints.Test
 {

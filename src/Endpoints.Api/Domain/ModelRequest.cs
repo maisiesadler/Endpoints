@@ -1,4 +1,4 @@
-namespace Endpoints.Api.Pipelines
+namespace Endpoints.Api.Domain
 {
     public class ModelRequest
     {

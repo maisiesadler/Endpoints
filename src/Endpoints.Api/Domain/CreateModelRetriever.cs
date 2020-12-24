@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Endpoints.Pipelines;
 
-namespace Endpoints.Api.Pipelines
+namespace Endpoints.Api.Domain
 {
     public class CreateModelRetriever : IRetriever<ModelRequest, CreateModelRetriever.Response>
     {

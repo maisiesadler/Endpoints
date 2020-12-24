@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using System.IO;
 using System.Text;
 using Endpoints.Extensions;
+using Endpoints.Api.Domain;
 
 namespace Endpoints.Test
 {

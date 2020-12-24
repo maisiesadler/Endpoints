@@ -1,5 +1,6 @@
 using System.Net;
 using System.Threading.Tasks;
+using Endpoints.Api.Domain;
 using Endpoints.Pipelines;
 using Microsoft.AspNetCore.Http;
 

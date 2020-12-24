@@ -10,6 +10,7 @@ using Endpoints.Pipelines;
 using System.Diagnostics;
 using Moq;
 using System.Collections.Generic;
+using Endpoints.Api.Domain;
 
 namespace Endpoints.Test
 {
