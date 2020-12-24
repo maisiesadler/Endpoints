@@ -57,7 +57,7 @@ namespace Endpoints.Test
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
                 endpoints.MapPost("/model", registry.GetRetrieve<CreateCrudModelRetriever, CrudModel, CrudId>());
-                endpoints.MapGet("/model/{id}", registry.GetRetrieve<ReadCrudModelRetriever, CrudId, CrudModel>());
+                endpoints.MapGet("/model/{id}", registry.GetRetrieve<CrudId, CrudModel>(sp => sp.GetRequiredService<IDatabase<CrudId, CrudModel>>().Read));
                 endpoints.MapPut("/model/{id}", registry.GetRetrieve<UpdateCrudModelRetriever, UpdateCrudModelRequest, bool>());
                 endpoints.MapDelete("/model/{id}", registry.GetRetrieve<DeleteCrudModelRetriever, CrudId, bool>());
             }));

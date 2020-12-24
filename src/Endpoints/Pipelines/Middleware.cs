@@ -13,12 +13,19 @@ namespace Endpoints.Pipelines
         public async Task<TOut> Run(Func<Task<TOut>> func) => await func();
     }
 
-    public abstract class MiddlewareBase<TOut> : Middleware<TOut>
+    public interface IMiddleware<TOut>
     {
-        private MiddlewareBase<TOut> _next;
+        Task<TOut> Run(Func<Task<TOut>> func);
+    }
 
-        public MiddlewareBase(MiddlewareBase<TOut> next)
+    public sealed class MiddlewareRunner<TOut> : Middleware<TOut>
+    {
+        private MiddlewareRunner<TOut> _next;
+        private readonly IMiddleware<TOut> _middleware;
+
+        public MiddlewareRunner(IMiddleware<TOut> middleware, MiddlewareRunner<TOut> next)
         {
+            _middleware = middleware ?? throw new ArgumentNullException("middleware");
             _next = next;
         }
 
@@ -38,25 +45,7 @@ namespace Endpoints.Pipelines
                 });
         }
 
-        protected abstract Task<TOut> RunInner(Func<Task<TOut>> func);
-    }
-
-    public interface IMiddleware<TOut>
-    {
-        Task<TOut> Run(Func<Task<TOut>> func);
-    }
-
-    public class MiddlewareRunner<TOut> : MiddlewareBase<TOut>
-    {
-        private readonly IMiddleware<TOut> _middleware;
-
-        public MiddlewareRunner(IMiddleware<TOut> middleware, MiddlewareBase<TOut> next)
-            : base(next)
-        {
-            _middleware = middleware;
-        }
-
-        protected async override Task<TOut> RunInner(Func<Task<TOut>> func)
+        private async Task<TOut> RunInner(Func<Task<TOut>> func)
         {
             return await _middleware.Run(func);
         }
