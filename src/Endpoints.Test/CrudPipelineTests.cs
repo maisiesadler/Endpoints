@@ -30,8 +30,6 @@ namespace Endpoints.Test
             {
                 services.AddSingleton(database);
 
-                services.AddTransient<CreateCrudModelRetriever>();
-                services.AddTransient<ReadCrudModelRetriever>();
                 services.AddTransient<UpdateCrudModelRetriever>();
                 services.AddTransient<DeleteCrudModelRetriever>();
 
@@ -56,7 +54,7 @@ namespace Endpoints.Test
             app => app.UseEndpoints(endpoints =>
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapPost("/model", registry.Get<CreateCrudModelRetriever, CrudModel, CrudId>());
+                endpoints.MapPost("/model", registry.Get<IDatabase<CrudId, CrudModel>, CrudModel, CrudId>(db => db.Create));
                 endpoints.MapGet("/model/{id}", registry.Get<CrudId, CrudModel>(sp => sp.GetRequiredService<IDatabase<CrudId, CrudModel>>().Read));
                 endpoints.MapPut("/model/{id}", registry.Get<UpdateCrudModelRetriever, UpdateCrudModelRequest, bool>());
                 endpoints.MapDelete("/model/{id}", registry.Get<DeleteCrudModelRetriever, CrudId, bool>());
@@ -223,38 +221,6 @@ namespace Endpoints.Test
             Task<TModel> Read(TId id);
             Task Update(TId id, TModel model);
             Task Delete(TId id);
-        }
-
-        public class CreateCrudModelRetriever : IRetriever<CrudModel, CrudId>
-        {
-            private readonly IDatabase<CrudId, CrudModel> _database;
-
-            public CreateCrudModelRetriever(IDatabase<CrudId, CrudModel> database)
-            {
-                _database = database;
-            }
-
-            public async Task<PipelineResponse<CrudId>> Retrieve(CrudModel input)
-            {
-                var result = await _database.Create(input);
-                return PipelineResponse.Ok(result);
-            }
-        }
-
-        public class ReadCrudModelRetriever : IRetriever<CrudId, CrudModel>
-        {
-            private readonly IDatabase<CrudId, CrudModel> _database;
-
-            public ReadCrudModelRetriever(IDatabase<CrudId, CrudModel> database)
-            {
-                _database = database;
-            }
-
-            public async Task<PipelineResponse<CrudModel>> Retrieve(CrudId input)
-            {
-                var result = await _database.Read(input);
-                return PipelineResponse.Ok(result);
-            }
         }
 
         public class UpdateCrudModelRetriever : IRetriever<UpdateCrudModelRequest, bool>

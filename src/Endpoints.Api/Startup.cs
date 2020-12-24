@@ -1,6 +1,5 @@
 using Endpoints.Api.Pipelines;
 using Endpoints.Extensions;
-using Endpoints.Pipelines;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -29,16 +28,16 @@ namespace Endpoints.Api
 
             services.AddPipelines();
             services.AddPipeline<ModelRequest, ModelResponse>(
-                MyModelRetriever.ParseModel,
-                MyModelRetriever.ParseResponse,
+                ModelParser.ParseModel,
+                ModelParser.ParseResponse,
                 builder => builder
                     .WithMiddleware<ExceptionHandlingMiddleware>()
                     .WithMiddleware<TimingMiddleware>()
             );
 
             services.AddPipeline<ModelRequest, CreateModelRetriever.Response>(
-                CreateModelRetriever.ParseModel,
-                CreateModelRetriever.ParseResponse
+                ModelParser.ParseModel,
+                ModelParser.ParseCreateModelResponse
             );
         }
 

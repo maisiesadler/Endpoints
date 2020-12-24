@@ -19,26 +19,5 @@ namespace Endpoints.Api.Pipelines
             var result = await _dbThing.GetModel(input);
             return PipelineResponse.Ok(result);
         }
-
-        public static ModelRequest ParseModel(HttpContext context)
-        {
-            return new ModelRequest
-            {
-                Id = context.Request.RouteValues["id"]?.ToString(),
-            };
-        }
-
-        public static async Task ParseResponse(HttpContext context, PipelineResponse<ModelResponse> response)
-        {
-            if (response.Success)
-            {
-                context.Response.StatusCode = (int)HttpStatusCode.OK;
-                await context.Response.WriteAsync(response.Result.Name);
-            }
-            else
-            {
-                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            }
-        }
     }
 }

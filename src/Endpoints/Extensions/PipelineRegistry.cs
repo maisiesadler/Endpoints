@@ -37,5 +37,17 @@ namespace Endpoints.Extensions
 
             return pipeline.Run;
         }
+
+        public RequestDelegate Get<TService, TIn, TOut>(Func<TService, Func<TIn, Task<TOut>>> retrieverFn)
+        {
+            var instructions = _serviceProvider.GetRequiredService<PipelineInstructions<TIn, TOut>>();
+            var service = _serviceProvider.GetRequiredService<TService>();
+            var retriever = retrieverFn(service);
+            var (pipeline, ok) = instructions.TryGetPipeline<TIn, TOut>(retriever, _serviceProvider);
+            if (!ok)
+                throw new Exception("Could not create pipeline");
+
+            return pipeline.Run;
+        }
     }
 }
