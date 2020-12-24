@@ -4,7 +4,6 @@ using Xunit;
 using Microsoft.Extensions.DependencyInjection;
 using Endpoints.Api.Pipelines;
 using Microsoft.AspNetCore.Builder;
-using Endpoints.Instructions;
 using Endpoints.Pipelines;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -22,16 +21,16 @@ namespace Endpoints.Test
             _fixture = fixture;
         }
 
-        public class TestGetPipeline : Pipeline<ModelRequest, PipelineResponse<ModelResponse>>
+        public class TestGetRetriever : IRetriever<ModelRequest, PipelineResponse<ModelResponse>>
         {
             private readonly IDbThing _dbThing;
 
-            public TestGetPipeline(IDbThing dbThing)
+            public TestGetRetriever(IDbThing dbThing)
             {
                 _dbThing = dbThing;
             }
 
-            protected override async Task<PipelineResponse<ModelResponse>> GetResponse(ModelRequest input)
+            public async Task<PipelineResponse<ModelResponse>> Retrieve(ModelRequest input)
             {
                 try
                 {
@@ -44,7 +43,7 @@ namespace Endpoints.Test
                 }
             }
 
-            protected override ModelRequest ParseModel(HttpContext context)
+            public static ModelRequest ParseModel(HttpContext context)
             {
                 return new ModelRequest
                 {
@@ -52,7 +51,7 @@ namespace Endpoints.Test
                 };
             }
 
-            protected override async Task ParseResponse(HttpContext context, PipelineResponse<ModelResponse> response)
+            public static async Task ParseResponse(HttpContext context, PipelineResponse<ModelResponse> response)
             {
                 if (response.Success)
                 {
@@ -75,13 +74,17 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddSingleton<IDbThing>(dbThing.Object);
+                services.AddTransient<TestGetRetriever>();
                 services.AddPipelines();
-                services.RegisterPipeline<TestGetPipeline, ModelRequest, PipelineResponse<ModelResponse>>();
+                services.RegisterRetrievePipeline<ModelRequest, PipelineResponse<ModelResponse>>(
+                    TestGetRetriever.ParseModel,
+                    TestGetRetriever.ParseResponse
+                );
             },
             app => app.UseEndpoints(endpoints =>
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapGet("/test", registry.Get<TestGetPipeline, ModelRequest, PipelineResponse<ModelResponse>>());
+                endpoints.MapGet("/test", registry.GetRetrieve<TestGetRetriever, ModelRequest, PipelineResponse<ModelResponse>>());
             }));
             var client = server.CreateClient();
 
@@ -106,13 +109,17 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddSingleton<IDbThing>(dbThing.Object);
+                services.AddTransient<TestGetRetriever>();
                 services.AddPipelines();
-                services.RegisterPipeline<TestGetPipeline, ModelRequest, PipelineResponse<ModelResponse>>();
+                services.RegisterRetrievePipeline<ModelRequest, PipelineResponse<ModelResponse>>(
+                    TestGetRetriever.ParseModel,
+                    TestGetRetriever.ParseResponse
+                );
             },
             app => app.UseEndpoints(endpoints =>
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapGet("/test", registry.Get<TestGetPipeline, ModelRequest, PipelineResponse<ModelResponse>>());
+                endpoints.MapGet("/test", registry.GetRetrieve<TestGetRetriever, ModelRequest, PipelineResponse<ModelResponse>>());
             }));
             var client = server.CreateClient();
 
