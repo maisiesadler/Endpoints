@@ -4,10 +4,8 @@ using Xunit;
 using Microsoft.Extensions.DependencyInjection;
 using Endpoints.Api.Pipelines;
 using Microsoft.AspNetCore.Builder;
-using Endpoints.Instructions;
 using Endpoints.Pipelines;
 using Microsoft.AspNetCore.Http;
-using System.Threading;
 using Endpoints.Extensions;
 
 namespace Endpoints.Test
@@ -21,21 +19,25 @@ namespace Endpoints.Test
             _fixture = fixture;
         }
 
-        public class TestGetPipeline : Pipeline<ModelRequest, ModelResponse>
+        public class DatabaseRetriever : IRetriever<ModelRequest, ModelResponse>
         {
             private readonly IDbThing _dbThing;
 
-            public TestGetPipeline(IDbThing dbThing)
+            public DatabaseRetriever(IDbThing dbThing)
             {
                 _dbThing = dbThing;
             }
 
-            protected override async Task<ModelResponse> GetResponse(ModelRequest input)
+            public async Task<PipelineResponse<ModelResponse>> Retrieve(ModelRequest input)
             {
-                return await _dbThing.GetModel(input);
+                var result = await _dbThing.GetModel(input);
+                return PipelineResponse.Ok(result);
             }
+        }
 
-            protected override ModelRequest ParseModel(HttpContext context)
+        public static class ModelParser
+        {
+            public static ModelRequest ParseModel(HttpContext context)
             {
                 return new ModelRequest
                 {
@@ -43,7 +45,7 @@ namespace Endpoints.Test
                 };
             }
 
-            protected override async Task ParseResponse(HttpContext context, ModelResponse response)
+            public static async Task ParseResponse(HttpContext context, ModelResponse response)
             {
                 context.Response.StatusCode = (int)HttpStatusCode.OK;
                 await context.Response.WriteAsync(response.Name);
@@ -57,14 +59,17 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddSingleton<IDbThing, DbThing>();
-                services.AddTransient<Pipeline<ModelRequest, ModelResponse>, TestGetPipeline>();
-                    // new PipelineInstructions<ModelRequest, ModelResponse>(stages => new MyModelPipeline(stages))
-                    //     .Register<GetModelFromDatabase>()
-                    //     .GetPipeline(sp));
+                services.AddTransient<DatabaseRetriever>();
+                services.AddPipelines();
+                services.AddPipeline<ModelRequest, ModelResponse>(
+                    ModelParser.ParseModel,
+                    ModelParser.ParseResponse
+                );
             },
             app => app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGet("/test", async ctx => await endpoints.ServiceProvider.GetRequiredService<Pipeline<ModelRequest, ModelResponse>>().Run(ctx));
+                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
+                endpoints.MapGet("/test", registry.Get<DatabaseRetriever, ModelRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 
@@ -87,14 +92,17 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddSingleton<IDbThing, DbThing>();
-                services.AddTransient<Pipeline<ModelRequest, ModelResponse>>(sp =>
-                    new PipelineInstructions<MyModelPipeline, ModelRequest, ModelResponse>()
-                        .WithStage<GetModelFromDatabase>()
-                        .GetPipeline(sp));
+                services.AddTransient<DatabaseRetriever>();
+                services.AddPipelines();
+                services.AddPipeline<ModelRequest, ModelResponse>(
+                    ModelParser.ParseModel,
+                    ModelParser.ParseResponse
+                );
             },
             app => app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGet("/test/{id}", async ctx => await endpoints.ServiceProvider.GetRequiredService<Pipeline<ModelRequest, ModelResponse>>().Run(ctx));
+                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
+                endpoints.MapGet("/test/{id}", registry.Get<DatabaseRetriever, ModelRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 
@@ -114,14 +122,9 @@ namespace Endpoints.Test
             public string Id2 { get; set; }
         }
 
-        public class TwoIdsPipeline : StagedPipeline<TwoIdsModelRequest, ModelResponse>
+        public class TwoIdsModelParser
         {
-            public TwoIdsPipeline(PipelineStage<TwoIdsModelRequest, ModelResponse> stages)
-                : base(stages)
-            {
-            }
-
-            protected override TwoIdsModelRequest ParseModel(HttpContext context)
+            public static TwoIdsModelRequest ParseModel(HttpContext context)
             {
                 return new TwoIdsModelRequest
                 {
@@ -129,24 +132,18 @@ namespace Endpoints.Test
                     Id2 = context.Request.RouteValues["id2"]?.ToString(),
                 };
             }
-
-            protected override async Task ParseResponse(HttpContext context, ModelResponse response)
-            {
-                context.Response.StatusCode = (int)HttpStatusCode.OK;
-                await context.Response.WriteAsync(response.Name);
-            }
         }
 
-        public class TestPipelineStage : PipelineStage<TwoIdsModelRequest, ModelResponse>
+        public class ModelFromTwoIdsRetriever : IRetriever<TwoIdsModelRequest, ModelResponse>
         {
-            public override Task<ModelResponse> RunAsync(TwoIdsModelRequest input, CancellationToken stoppingToken)
+            public Task<PipelineResponse<ModelResponse>> Retrieve(TwoIdsModelRequest input)
             {
                 var response = new ModelResponse
                 {
                     Name = $"Id = {input.Id}, Id2 = {input.Id2}",
                 };
 
-                return Task.FromResult(response);
+                return Task.FromResult(PipelineResponse.Ok(response));
             }
         }
 
@@ -157,14 +154,17 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddSingleton<IDbThing, DbThing>();
-                services.AddPipelines()
-                    .RegisterPipeline<TwoIdsPipeline, TwoIdsModelRequest, ModelResponse>(
-                        b => b.WithStage<TestPipelineStage>());
+                services.AddTransient<ModelFromTwoIdsRetriever>();
+                services.AddPipelines();
+                services.AddPipeline<TwoIdsModelRequest, ModelResponse>(
+                    TwoIdsModelParser.ParseModel,
+                    ModelParser.ParseResponse
+                );
             },
             app => app.UseEndpoints(endpoints =>
             {
                 var pipelineRegistry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapGet("/test/{id}/{id2}", pipelineRegistry.Get<TwoIdsPipeline, TwoIdsModelRequest, ModelResponse>());
+                endpoints.MapGet("/test/{id}/{id2}", pipelineRegistry.Get<ModelFromTwoIdsRetriever, TwoIdsModelRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 

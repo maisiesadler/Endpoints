@@ -1,70 +1,35 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
 namespace Endpoints.Pipelines
 {
-    public abstract class Pipeline<TIn, TOut>
+    public class Pipeline<TIn, TOut>
     {
-        protected abstract TIn ParseModel(HttpContext context);
-        protected abstract Task ParseResponse(HttpContext context, TOut response);
-        protected abstract Task<TOut> GetResponse(TIn input);
+        private readonly Func<HttpContext, Task<TIn>> _parseModel;
+        private readonly Func<HttpContext, PipelineResponse<TOut>, Task> _parseResponse;
+        private readonly IRetriever<TIn, TOut> _retriever;
+        private readonly Middleware<TOut> _middleware;
 
-        protected virtual Task<TIn> ParseModelAsync(HttpContext context)
+        public Pipeline(
+            Func<HttpContext, Task<TIn>> parseModel,
+            Func<HttpContext, PipelineResponse<TOut>, Task> parseResponse,
+            IRetriever<TIn, TOut> retriever,
+            Middleware<TOut> middleware)
         {
-            return Task.FromResult(ParseModel(context));
+            _parseModel = parseModel;
+            _parseResponse = parseResponse;
+            _retriever = retriever;
+            _middleware = middleware;
         }
 
         public async Task Run(HttpContext context)
         {
-            var input = await ParseModelAsync(context);
-            var response = await GetResponse(input);
+            var input = await _parseModel(context);
 
-            await ParseResponse(context, response);
-        }
-    }
+            var response = await _middleware.Run(() => _retriever.Retrieve(input));
 
-    public abstract class Pipeline<TIn, TOut, TError> : Pipeline<TIn, PipelineResponse<TOut, TError>>
-    {
-        protected abstract Task<TError> ParseErrorResponse(TIn input, Exception exception);
-        protected abstract Task<TOut> TryGetResponse(TIn input);
-        protected async override Task<PipelineResponse<TOut, TError>> GetResponse(TIn input)
-        {
-            try
-            {
-                var response = await TryGetResponse(input);
-                return PipelineResponse<TOut, TError>.Ok(response);
-            }
-            catch (Exception ex)
-            {
-                var error = await ParseErrorResponse(input, ex);
-                return PipelineResponse<TOut, TError>.Fail(error);
-            }
-        }
-    }
-
-    public class PipelineResponse<TResult, TError>
-    {
-        public bool Success { get; }
-        public TResult Result { get; }
-        public TError Error { get; }
-
-        private PipelineResponse(bool success, TResult result, TError error)
-        {
-            Success = success;
-            Result = result;
-            Error = error;
-        }
-
-        public static PipelineResponse<TResult, TError> Ok(TResult result)
-        {
-            return new PipelineResponse<TResult, TError>(true, result, default);
-        }
-
-        public static PipelineResponse<TResult, TError> Fail(TError error)
-        {
-            return new PipelineResponse<TResult, TError>(false, default, error);
+            await _parseResponse(context, response);
         }
     }
 }

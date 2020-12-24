@@ -6,11 +6,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Endpoints.Api.Pipelines;
 using Endpoints.Pipelines;
-using Endpoints.Instructions;
 using Microsoft.AspNetCore.Http;
-using System.Threading;
 using System.IO;
 using System.Text;
+using Endpoints.Extensions;
 
 namespace Endpoints.Test
 {
@@ -29,16 +28,9 @@ namespace Endpoints.Test
             public string Body { get; set; }
         }
 
-        public class ParseBodyPipeline : StagedPipeline<BodyRequest, ModelResponse>
+        public class ModelParser
         {
-            public ParseBodyPipeline(PipelineStage<BodyRequest, ModelResponse> stages)
-                : base(stages)
-            {
-            }
-
-            protected override BodyRequest ParseModel(HttpContext context) => throw new System.NotImplementedException();
-
-            protected override async Task<BodyRequest> ParseModelAsync(HttpContext context)
+            public static async Task<BodyRequest> ParseModel(HttpContext context)
             {
                 string body;
                 using (var reader = new StreamReader(context.Request.Body, Encoding.UTF8, true, 1024, true))
@@ -53,23 +45,23 @@ namespace Endpoints.Test
                 };
             }
 
-            protected override async Task ParseResponse(HttpContext context, ModelResponse response)
+            public static async Task ParseResponse(HttpContext context, ModelResponse response)
             {
                 context.Response.StatusCode = (int)HttpStatusCode.OK;
                 await context.Response.WriteAsync(response.Name);
             }
         }
 
-        public class BodyPipelineStage : PipelineStage<BodyRequest, ModelResponse>
+        public class ModelRetriever : IRetriever<BodyRequest, ModelResponse>
         {
-            public override Task<ModelResponse> RunAsync(BodyRequest input, CancellationToken stoppingToken)
+            public Task<PipelineResponse<ModelResponse>> Retrieve(BodyRequest input)
             {
                 var response = new ModelResponse
                 {
                     Name = $"Id = {input.Id}, Body = {input.Body}",
                 };
 
-                return Task.FromResult(response);
+                return Task.FromResult(PipelineResponse.Ok(response));
             }
         }
 
@@ -79,14 +71,17 @@ namespace Endpoints.Test
             // Arrange
             using var server = _fixture.CreateServer(services =>
             {
-                services.AddTransient<Pipeline<BodyRequest, ModelResponse>>(sp =>
-                    new PipelineInstructions<ParseBodyPipeline, BodyRequest, ModelResponse>()
-                        .WithStage<BodyPipelineStage>()
-                        .GetPipeline(sp));
+                services.AddTransient<ModelRetriever>();
+                services.AddPipelines();
+                services.AddPipeline<BodyRequest, ModelResponse>(
+                    ModelParser.ParseModel,
+                    ModelParser.ParseResponse
+                );
             },
             app => app.UseEndpoints(endpoints =>
             {
-                endpoints.MapPost("/test", async ctx => await endpoints.ServiceProvider.GetRequiredService<Pipeline<BodyRequest, ModelResponse>>().Run(ctx));
+                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
+                endpoints.MapPost("/test", registry.Get<ModelRetriever, BodyRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 
@@ -108,14 +103,17 @@ namespace Endpoints.Test
             // Arrange
             using var server = _fixture.CreateServer(services =>
             {
-                services.AddTransient<Pipeline<BodyRequest, ModelResponse>>(sp =>
-                    new PipelineInstructions<ParseBodyPipeline, BodyRequest, ModelResponse>()
-                        .WithStage<BodyPipelineStage>()
-                        .GetPipeline(sp));
+                services.AddTransient<ModelRetriever>();
+                services.AddPipelines();
+                services.AddPipeline<BodyRequest, ModelResponse>(
+                    ModelParser.ParseModel,
+                    ModelParser.ParseResponse
+                );
             },
             app => app.UseEndpoints(endpoints =>
             {
-                endpoints.MapPost("/test/{id}", async ctx => await endpoints.ServiceProvider.GetRequiredService<Pipeline<BodyRequest, ModelResponse>>().Run(ctx));
+                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
+                endpoints.MapPost("/test/{id}", registry.Get<ModelRetriever, BodyRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 
@@ -135,14 +133,17 @@ namespace Endpoints.Test
             // Arrange
             using var server = _fixture.CreateServer(services =>
             {
-                services.AddTransient<Pipeline<BodyRequest, ModelResponse>>(sp =>
-                    new PipelineInstructions<ParseBodyPipeline, BodyRequest, ModelResponse>()
-                        .WithStage<BodyPipelineStage>()
-                        .GetPipeline(sp));
+                services.AddTransient<ModelRetriever>();
+                services.AddPipelines();
+                services.AddPipeline<BodyRequest, ModelResponse>(
+                    ModelParser.ParseModel,
+                    ModelParser.ParseResponse
+                );
             },
             app => app.UseEndpoints(endpoints =>
             {
-                endpoints.MapPost("/test", async ctx => await endpoints.ServiceProvider.GetRequiredService<Pipeline<BodyRequest, ModelResponse>>().Run(ctx));
+                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
+                endpoints.MapPost("/test", registry.Get<ModelRetriever, BodyRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 

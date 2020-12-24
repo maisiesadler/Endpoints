@@ -1,5 +1,6 @@
 using Endpoints.Api.Pipelines;
 using Endpoints.Extensions;
+using Endpoints.Pipelines;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -21,14 +22,24 @@ namespace Endpoints.Api
             services.AddRouting();
 
             services.AddSingleton<IDbThing, DbThing>();
+            services.AddSingleton<CreateModelRetriever>();
+            services.AddSingleton<MyModelRetriever>();
+            services.AddSingleton<TimingMiddleware>();
+            services.AddSingleton<ExceptionHandlingMiddleware>();
 
             services.AddPipelines();
-            services.RegisterPipeline<MyModelPipeline, ModelRequest, ModelResponse>(
-                builder => builder.WithStage<TimingPipelineStage>()
-                    .WithStage<ExceptionHandlingPipelineStage>()
-                    .WithStage<GetModelFromDatabase>());
+            services.AddPipeline<ModelRequest, ModelResponse>(
+                MyModelRetriever.ParseModel,
+                MyModelRetriever.ParseResponse,
+                builder => builder
+                    .WithMiddleware<ExceptionHandlingMiddleware>()
+                    .WithMiddleware<TimingMiddleware>()
+            );
 
-            services.RegisterPipeline<CreateModelPipeline, ModelRequest, CreateModelPipeline.Response>();
+            services.AddPipeline<ModelRequest, CreateModelRetriever.Response>(
+                CreateModelRetriever.ParseModel,
+                CreateModelRetriever.ParseResponse
+            );
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -39,8 +50,8 @@ namespace Endpoints.Api
             {
                 var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
 
-                endpoints.MapPost("/testing", registry.Get<CreateModelPipeline, ModelRequest, CreateModelPipeline.Response>());
-                endpoints.MapGet("/testing/{id}", registry.Get<MyModelPipeline, ModelRequest, ModelResponse>());
+                endpoints.MapPost("/testing", registry.Get<CreateModelRetriever, ModelRequest, CreateModelRetriever.Response>());
+                endpoints.MapGet("/testing/{id}", registry.Get<MyModelRetriever, ModelRequest, ModelResponse>());
             });
         }
     }
