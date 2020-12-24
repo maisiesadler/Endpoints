@@ -6,6 +6,7 @@ using Endpoints.Pipelines;
 using Endpoints.Api.Domain;
 using System.Net;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 
 namespace Endpoints.Test
 {
@@ -25,7 +26,6 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddTransient<TransientRetriever>();
-                services.AddPipelines();
                 services.AddPipeline<ModelRequest, ModelResponse>(
                     ModelParser.ParseModel,
                     ModelParser.ParseResponse
@@ -33,8 +33,7 @@ namespace Endpoints.Test
             },
             app => app.UseEndpoints(endpoints =>
             {
-                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapGet("/test", registry.Get<TransientRetriever, ModelRequest, ModelResponse>());
+                endpoints.MapGet("/test", endpoints.ServiceProvider.Get<TransientRetriever, ModelRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 

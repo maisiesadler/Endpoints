@@ -10,13 +10,6 @@ namespace Endpoints.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddPipelines(this IServiceCollection services)
-        {
-            services.AddSingleton<PipelineRegistry>();
-
-            return services;
-        }
-
         public static IServiceCollection AddPipeline<TIn, TOut>(
            this IServiceCollection services,
            Func<HttpContext, Task<TIn>> parseModel,

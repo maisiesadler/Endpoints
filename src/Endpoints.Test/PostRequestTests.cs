@@ -4,7 +4,6 @@ using System.Net.Http;
 using Xunit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using Endpoints.Api.Pipelines;
 using Endpoints.Pipelines;
 using Microsoft.AspNetCore.Http;
 using System.IO;
@@ -73,7 +72,6 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddTransient<ModelRetriever>();
-                services.AddPipelines();
                 services.AddPipeline<BodyRequest, ModelResponse>(
                     ModelParser.ParseModel,
                     ModelParser.ParseResponse
@@ -81,8 +79,7 @@ namespace Endpoints.Test
             },
             app => app.UseEndpoints(endpoints =>
             {
-                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapPost("/test", registry.Get<ModelRetriever, BodyRequest, ModelResponse>());
+                endpoints.MapPost("/test", endpoints.ServiceProvider.Get<ModelRetriever, BodyRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 
@@ -105,7 +102,6 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddTransient<ModelRetriever>();
-                services.AddPipelines();
                 services.AddPipeline<BodyRequest, ModelResponse>(
                     ModelParser.ParseModel,
                     ModelParser.ParseResponse
@@ -113,8 +109,7 @@ namespace Endpoints.Test
             },
             app => app.UseEndpoints(endpoints =>
             {
-                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapPost("/test/{id}", registry.Get<ModelRetriever, BodyRequest, ModelResponse>());
+                endpoints.MapPost("/test/{id}", endpoints.ServiceProvider.Get<ModelRetriever, BodyRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 
@@ -135,7 +130,6 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddTransient<ModelRetriever>();
-                services.AddPipelines();
                 services.AddPipeline<BodyRequest, ModelResponse>(
                     ModelParser.ParseModel,
                     ModelParser.ParseResponse
@@ -143,8 +137,7 @@ namespace Endpoints.Test
             },
             app => app.UseEndpoints(endpoints =>
             {
-                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
-                endpoints.MapPost("/test", registry.Get<ModelRetriever, BodyRequest, ModelResponse>());
+                endpoints.MapPost("/test", endpoints.ServiceProvider.Get<ModelRetriever, BodyRequest, ModelResponse>());
             }));
             var client = server.CreateClient();
 

@@ -122,7 +122,6 @@ namespace Endpoints.Test
         {
             // Arrange
             var services = new ServiceCollection();
-            services.AddPipelines();
             services.AddPipeline<ModelRequest, ModelResponse>(
                 ModelParser.FromBody,
                 ModelParser.SetFromModelResponse,
@@ -135,10 +134,9 @@ namespace Endpoints.Test
             var sp = services.BuildServiceProvider();
 
             // Act
-            var registry = sp.GetRequiredService<PipelineRegistry>();
+            var pipeline = sp.Get<DatabaseRetriever, ModelRequest, ModelResponse>();
 
             // Assert
-            var pipeline = registry.Get<DatabaseRetriever, ModelRequest, ModelResponse>();
             Assert.NotNull(pipeline);
         }
     }
