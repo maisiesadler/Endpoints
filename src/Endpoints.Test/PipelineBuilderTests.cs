@@ -128,11 +128,11 @@ namespace Endpoints.Test
             services.AddPipelines();
             services.AddPipeline<ModelRequest, ModelResponse>(
                 ModelParser.FromBody,
-                ModelParser.SetFromModelResponse
-            // builder => builder.WithStage<TimingPipelineStage>()
-            //                   .WithStage<GetModelFromDatabase>()
+                ModelParser.SetFromModelResponse,
+                builder => builder.WithMiddleware<TimingMiddleware>()
             );
 
+            services.AddTransient<TimingMiddleware>();
             services.AddTransient<DatabaseRetriever>();
             services.AddTransient<IDbThing, DbThing>();
             var sp = services.BuildServiceProvider();

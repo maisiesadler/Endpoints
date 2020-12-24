@@ -1,159 +1,160 @@
-// using System.Threading.Tasks;
-// using System.Net;
-// using System.Net.Http;
-// using Xunit;
-// using Microsoft.AspNetCore.Builder;
-// using Microsoft.Extensions.DependencyInjection;
-// using Endpoints.Api.Pipelines;
-// using Endpoints.Pipelines;
-// using Endpoints.Instructions;
-// using Microsoft.AspNetCore.Http;
-// using System.Threading;
-// using System.IO;
-// using System.Text;
+using System.Threading.Tasks;
+using System.Net;
+using System.Net.Http;
+using Xunit;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Endpoints.Api.Pipelines;
+using Endpoints.Pipelines;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using System.Text;
+using Endpoints.Extensions;
 
-// namespace Endpoints.Test
-// {
-//     public class PostRequestTests : IClassFixture<TestFixture>
-//     {
-//         private readonly TestFixture _fixture;
+namespace Endpoints.Test
+{
+    public class PostRequestTests : IClassFixture<TestFixture>
+    {
+        private readonly TestFixture _fixture;
 
-//         public PostRequestTests(TestFixture fixture)
-//         {
-//             _fixture = fixture;
-//         }
+        public PostRequestTests(TestFixture fixture)
+        {
+            _fixture = fixture;
+        }
 
-//         public class BodyRequest
-//         {
-//             public string Id { get; set; }
-//             public string Body { get; set; }
-//         }
+        public class BodyRequest
+        {
+            public string Id { get; set; }
+            public string Body { get; set; }
+        }
 
-//         public class ParseBodyPipeline : StagedPipeline<BodyRequest, ModelResponse>
-//         {
-//             public ParseBodyPipeline(PipelineStage<BodyRequest, ModelResponse> stages)
-//                 : base(stages)
-//             {
-//             }
+        public class ModelParser
+        {
+            public static async Task<BodyRequest> ParseModel(HttpContext context)
+            {
+                string body;
+                using (var reader = new StreamReader(context.Request.Body, Encoding.UTF8, true, 1024, true))
+                {
+                    body = await reader.ReadToEndAsync();
+                }
 
-//             protected override BodyRequest ParseModel(HttpContext context) => throw new System.NotImplementedException();
+                return new BodyRequest
+                {
+                    Id = context.Request.RouteValues["id"]?.ToString(),
+                    Body = body,
+                };
+            }
 
-//             protected override async Task<BodyRequest> ParseModelAsync(HttpContext context)
-//             {
-//                 string body;
-//                 using (var reader = new StreamReader(context.Request.Body, Encoding.UTF8, true, 1024, true))
-//                 {
-//                     body = await reader.ReadToEndAsync();
-//                 }
+            public static async Task ParseResponse(HttpContext context, ModelResponse response)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.OK;
+                await context.Response.WriteAsync(response.Name);
+            }
+        }
 
-//                 return new BodyRequest
-//                 {
-//                     Id = context.Request.RouteValues["id"]?.ToString(),
-//                     Body = body,
-//                 };
-//             }
+        public class ModelRetriever : IRetriever<BodyRequest, ModelResponse>
+        {
+            public Task<PipelineResponse<ModelResponse>> Retrieve(BodyRequest input)
+            {
+                var response = new ModelResponse
+                {
+                    Name = $"Id = {input.Id}, Body = {input.Body}",
+                };
 
-//             protected override async Task ParseResponse(HttpContext context, ModelResponse response)
-//             {
-//                 context.Response.StatusCode = (int)HttpStatusCode.OK;
-//                 await context.Response.WriteAsync(response.Name);
-//             }
-//         }
+                return Task.FromResult(PipelineResponse.Ok(response));
+            }
+        }
 
-//         public class BodyPipelineStage : PipelineStage<BodyRequest, ModelResponse>
-//         {
-//             public override Task<ModelResponse> RunAsync(BodyRequest input, CancellationToken stoppingToken)
-//             {
-//                 var response = new ModelResponse
-//                 {
-//                     Name = $"Id = {input.Id}, Body = {input.Body}",
-//                 };
+        [Fact]
+        public async Task PostWithNoParameters()
+        {
+            // Arrange
+            using var server = _fixture.CreateServer(services =>
+            {
+                services.AddTransient<ModelRetriever>();
+                services.AddPipelines();
+                services.AddPipeline<BodyRequest, ModelResponse>(
+                    ModelParser.ParseModel,
+                    ModelParser.ParseResponse
+                );
+            },
+            app => app.UseEndpoints(endpoints =>
+            {
+                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
+                endpoints.MapPost("/test", registry.Get<ModelRetriever, BodyRequest, ModelResponse>());
+            }));
+            var client = server.CreateClient();
 
-//                 return Task.FromResult(response);
-//             }
-//         }
+            // Act
+            var response = await client.PostAsync("/test", null);
 
-//         [Fact]
-//         public async Task PostWithNoParameters()
-//         {
-//             // Arrange
-//             using var server = _fixture.CreateServer(services =>
-//             {
-//                 services.AddTransient<Pipeline<BodyRequest, ModelResponse>>(sp =>
-//                     new PipelineInstructions<ParseBodyPipeline, BodyRequest, ModelResponse>()
-//                         .WithStage<BodyPipelineStage>()
-//                         .GetPipeline(sp));
-//             },
-//             app => app.UseEndpoints(endpoints =>
-//             {
-//                 endpoints.MapPost("/test", async ctx => await endpoints.ServiceProvider.GetRequiredService<Pipeline<BodyRequest, ModelResponse>>().Run(ctx));
-//             }));
-//             var client = server.CreateClient();
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-//             // Act
-//             var response = await client.PostAsync("/test", null);
+            var content = await response.Content.ReadAsStringAsync();
+            Assert.Equal("Id = , Body = ", content);
+        }
 
-//             // Assert
-//             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        [Theory]
+        [InlineData("test1")]
+        [InlineData("anothername")]
+        public async Task PostWithStringParameter(string @param)
+        {
+            // Arrange
+            using var server = _fixture.CreateServer(services =>
+            {
+                services.AddTransient<ModelRetriever>();
+                services.AddPipelines();
+                services.AddPipeline<BodyRequest, ModelResponse>(
+                    ModelParser.ParseModel,
+                    ModelParser.ParseResponse
+                );
+            },
+            app => app.UseEndpoints(endpoints =>
+            {
+                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
+                endpoints.MapPost("/test/{id}", registry.Get<ModelRetriever, BodyRequest, ModelResponse>());
+            }));
+            var client = server.CreateClient();
 
-//             var content = await response.Content.ReadAsStringAsync();
-//             Assert.Equal("Id = , Body = ", content);
-//         }
+            // Act
+            var response = await client.PostAsync($"/test/{@param}", null);
 
-//         [Theory]
-//         [InlineData("test1")]
-//         [InlineData("anothername")]
-//         public async Task PostWithStringParameter(string @param)
-//         {
-//             // Arrange
-//             using var server = _fixture.CreateServer(services =>
-//             {
-//                 services.AddTransient<Pipeline<BodyRequest, ModelResponse>>(sp =>
-//                     new PipelineInstructions<ParseBodyPipeline, BodyRequest, ModelResponse>()
-//                         .WithStage<BodyPipelineStage>()
-//                         .GetPipeline(sp));
-//             },
-//             app => app.UseEndpoints(endpoints =>
-//             {
-//                 endpoints.MapPost("/test/{id}", async ctx => await endpoints.ServiceProvider.GetRequiredService<Pipeline<BodyRequest, ModelResponse>>().Run(ctx));
-//             }));
-//             var client = server.CreateClient();
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-//             // Act
-//             var response = await client.PostAsync($"/test/{@param}", null);
+            var content = await response.Content.ReadAsStringAsync();
+            Assert.Equal($"Id = {@param}, Body = ", content);
+        }
 
-//             // Assert
-//             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        [Fact]
+        public async Task PostWithBody()
+        {
+            // Arrange
+            using var server = _fixture.CreateServer(services =>
+            {
+                services.AddTransient<ModelRetriever>();
+                services.AddPipelines();
+                services.AddPipeline<BodyRequest, ModelResponse>(
+                    ModelParser.ParseModel,
+                    ModelParser.ParseResponse
+                );
+            },
+            app => app.UseEndpoints(endpoints =>
+            {
+                var registry = endpoints.ServiceProvider.GetRequiredService<PipelineRegistry>();
+                endpoints.MapPost("/test", registry.Get<ModelRetriever, BodyRequest, ModelResponse>());
+            }));
+            var client = server.CreateClient();
 
-//             var content = await response.Content.ReadAsStringAsync();
-//             Assert.Equal($"Id = {@param}, Body = ", content);
-//         }
+            // Act
+            var response = await client.PostAsync("/test", new StringContent("Hello, world!"));
 
-//         [Fact]
-//         public async Task PostWithBody()
-//         {
-//             // Arrange
-//             using var server = _fixture.CreateServer(services =>
-//             {
-//                 services.AddTransient<Pipeline<BodyRequest, ModelResponse>>(sp =>
-//                     new PipelineInstructions<ParseBodyPipeline, BodyRequest, ModelResponse>()
-//                         .WithStage<BodyPipelineStage>()
-//                         .GetPipeline(sp));
-//             },
-//             app => app.UseEndpoints(endpoints =>
-//             {
-//                 endpoints.MapPost("/test", async ctx => await endpoints.ServiceProvider.GetRequiredService<Pipeline<BodyRequest, ModelResponse>>().Run(ctx));
-//             }));
-//             var client = server.CreateClient();
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-//             // Act
-//             var response = await client.PostAsync("/test", new StringContent("Hello, world!"));
-
-//             // Assert
-//             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-//             var content = await response.Content.ReadAsStringAsync();
-//             Assert.Equal("Id = , Body = Hello, world!", content);
-//         }
-//     }
-// }
+            var content = await response.Content.ReadAsStringAsync();
+            Assert.Equal("Id = , Body = Hello, world!", content);
+        }
+    }
+}
