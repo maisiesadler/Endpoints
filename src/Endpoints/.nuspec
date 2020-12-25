@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Endpoints</id>
+        <authors>Maisie Sadler</authors>
+        <description>Simple way to set up endpoint routing.</description>
+        <projectUrl>https://github.com/maisiesadler/Endpoints/</projectUrl>
+        <license type="expression">MIT</license>
+        <repository type="git" url="https://github.com/maisiesadler/Endpoints" branch="master" />
+        <tags>web utility http endpoints endpoint routing</tags>
+    </metadata>
+</package>
