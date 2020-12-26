@@ -1,5 +1,8 @@
 # Endpoints
 
+[![NuGet version (Endpoints)](https://img.shields.io/nuget/v/Endpoints.svg)](https://www.nuget.org/packages/Endpoints/)
+[![Workflow status](https://github.com/maisiesadler/Endpoints/workflows/Release%20Nuget%20Package/badge.svg)](https://github.com/maisiesadler/Endpoints/workflows/Release%20Nuget%20Package/badge.svg)
+
 Endpoints provides a more friendly way to set up functions for using AspNetCore Endpoint Routing.
 
 ## Aims

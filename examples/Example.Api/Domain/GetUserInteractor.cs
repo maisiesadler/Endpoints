@@ -15,7 +15,6 @@ namespace Example.Api.Domain
         }
         public async Task<PipelineResponse<GetUserResponse>> Retrieve(GetUserRequest request)
         {
-            throw new System.InvalidOperationException();
             var user = await _database.Get(request.Id);
             if (user == null)
             {
