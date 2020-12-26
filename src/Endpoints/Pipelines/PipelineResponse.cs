@@ -31,6 +31,11 @@ namespace Endpoints.Pipelines
         {
             return new PipelineResponse<TResult>(false, default, new PipelineResponseError(exception, errorMessage));
         }
+
+        public static PipelineResponse<TResult> Fail<TResult>(string errorMessage)
+        {
+            return new PipelineResponse<TResult>(false, default, new PipelineResponseError(default, errorMessage));
+        }
     }
 
     public class PipelineResponse<TResult, TError>

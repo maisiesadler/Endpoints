@@ -60,3 +60,8 @@ app => app.UseEndpoints(endpoints =>
     endpoints.MapGet("/test", endpoints.ServiceProvider.Get<IBusinessLogic, Request, Response>());
 }));
 ```
+## Getting started
+
+Create new empty web project using `dotnet new web`.
+
+Add Endpoints reference using `dotnet add package Endpoints`
