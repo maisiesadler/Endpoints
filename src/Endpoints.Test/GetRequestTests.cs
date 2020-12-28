@@ -30,7 +30,7 @@ namespace Endpoints.Test
                 _dbThing = dbThing;
             }
 
-            public override async Task<PipelineResponse<List<ModelResponse>>> Retrieve()
+            public async Task<PipelineResponse<List<ModelResponse>>> Retrieve()
             {
                 var result = await _dbThing.GetAll();
                 return PipelineResponse.Ok(result);

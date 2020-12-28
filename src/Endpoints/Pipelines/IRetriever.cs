@@ -7,10 +7,8 @@ namespace Endpoints.Pipelines
         Task<PipelineResponse<TOut>> Retrieve(TIn input);
     }
 
-    public abstract class IRetriever<TOut> : IRetriever<NoType, TOut>
+    public interface IRetriever<TOut>
     {
-        public Task<PipelineResponse<TOut>> Retrieve(NoType input) => Retrieve();
-
-        public abstract Task<PipelineResponse<TOut>> Retrieve();
+        Task<PipelineResponse<TOut>> Retrieve();
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Endpoints.Instructions;
 using Endpoints.Pipelines;
+using Endpoints.Pipelines.Retrievers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -34,12 +35,13 @@ namespace Endpoints.Extensions
             {
                 var instructions = serviceProvider.GetRequiredService<PipelineInstructions<TOut>>();
                 var retriever = serviceProvider.GetRequiredService<TRetriever>();
+                var retrieverImpl = new RetrieverImpl<TOut>(retriever);
 
                 var (pipeline, ok) = instructions.TryGetPipeline<TOut>(serviceProvider);
                 if (!ok)
                     throw new Exception("Could not create pipeline");
 
-                await pipeline.Run(retriever, ctx);
+                await pipeline.Run(retrieverImpl, ctx);
             };
         }
 
