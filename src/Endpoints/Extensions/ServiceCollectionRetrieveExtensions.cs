@@ -26,6 +26,23 @@ namespace Endpoints.Extensions
             };
         }
 
+        public static RequestDelegate Get<TRetriever, TOut>(
+           this IServiceProvider serviceProvider)
+           where TRetriever : IRetriever<TOut>
+        {
+            return async ctx =>
+            {
+                var instructions = serviceProvider.GetRequiredService<PipelineInstructions<TOut>>();
+                var retriever = serviceProvider.GetRequiredService<TRetriever>();
+
+                var (pipeline, ok) = instructions.TryGetPipeline<TOut>(serviceProvider);
+                if (!ok)
+                    throw new Exception("Could not create pipeline");
+
+                await pipeline.Run(retriever, ctx);
+            };
+        }
+
         public static RequestDelegate Get<TIn, TOut>(
             this IServiceProvider serviceProvider,
             Func<IServiceProvider, Func<TIn, Task<TOut>>> retrieverFn)

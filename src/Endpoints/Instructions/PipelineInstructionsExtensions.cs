@@ -24,6 +24,9 @@ namespace Endpoints.Instructions
             return (pipeline, true);
         }
 
+        public static (Pipeline<NoType, TOut>, bool) TryGetPipeline<TOut>(
+                   this PipelineInstructions<TOut> instructions,
+                   IServiceProvider sp) => instructions.TryGetPipeline<NoType, TOut>(sp);
 
         public static Middleware<TOut> BuildMiddleware<TIn, TOut>(
             this PipelineInstructions<TIn, TOut> instructions, IServiceProvider sp)

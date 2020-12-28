@@ -52,6 +52,19 @@ namespace Endpoints.Extensions
             return services;
         }
 
+        public static IServiceCollection AddPipeline<TOut>(
+           this IServiceCollection services,
+           Func<HttpContext, TOut, Task> parseResponse)
+        {
+            var instructions = new PipelineInstructions<TOut>(
+                WrapParseResponse(parseResponse)
+            );
+
+            services.AddSingleton(instructions);
+
+            return services;
+        }
+
         // todo: default error wrapper?
         private static Func<HttpContext, PipelineResponse<TOut>, Task> WrapParseResponse<TOut>(Func<HttpContext, TOut, Task> func)
         {

@@ -7,6 +7,8 @@ using Endpoints.Pipelines;
 using Microsoft.AspNetCore.Http;
 using Endpoints.Extensions;
 using Endpoints.Api.Domain;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Endpoints.Test
 {
@@ -17,6 +19,22 @@ namespace Endpoints.Test
         public GetRequestTests(TestFixture fixture)
         {
             _fixture = fixture;
+        }
+
+        public class DatabaseAllRetriever : IRetriever<List<ModelResponse>>
+        {
+            private readonly IDbThing _dbThing;
+
+            public DatabaseAllRetriever(IDbThing dbThing)
+            {
+                _dbThing = dbThing;
+            }
+
+            public override async Task<PipelineResponse<List<ModelResponse>>> Retrieve()
+            {
+                var result = await _dbThing.GetAll();
+                return PipelineResponse.Ok(result);
+            }
         }
 
         public class DatabaseRetriever : IRetriever<ModelRequest, ModelResponse>
@@ -50,6 +68,12 @@ namespace Endpoints.Test
                 context.Response.StatusCode = (int)HttpStatusCode.OK;
                 await context.Response.WriteAsync(response.Name);
             }
+
+            public static async Task ParseResponse(HttpContext context, List<ModelResponse> response)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.OK;
+                await context.Response.WriteAsync(string.Join(", ", response.Select(s => s.Name)));
+            }
         }
 
         [Fact]
@@ -59,15 +83,14 @@ namespace Endpoints.Test
             using var server = _fixture.CreateServer(services =>
             {
                 services.AddSingleton<IDbThing, DbThing>();
-                services.AddTransient<DatabaseRetriever>();
-                services.AddPipeline<ModelRequest, ModelResponse>(
-                    ModelParser.ParseModel,
+                services.AddTransient<DatabaseAllRetriever>();
+                services.AddPipeline<List<ModelResponse>>(
                     ModelParser.ParseResponse
                 );
             },
             app => app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGet("/test", endpoints.ServiceProvider.Get<DatabaseRetriever, ModelRequest, ModelResponse>());
+                endpoints.MapGet("/test", endpoints.ServiceProvider.Get<DatabaseAllRetriever, List<ModelResponse>>());
             }));
             var client = server.CreateClient();
 
@@ -78,7 +101,7 @@ namespace Endpoints.Test
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             var content = await response.Content.ReadAsStringAsync();
-            Assert.Equal("0=", content);
+            Assert.Equal("one", content);
         }
 
         [Theory]

@@ -47,4 +47,13 @@ namespace Endpoints.Instructions
             return this;
         }
     }
+
+    public class PipelineInstructions<TOut> : PipelineInstructions<NoType, TOut>
+    {
+        public PipelineInstructions(
+            Func<HttpContext, PipelineResponse<TOut>, Task> parseResponse)
+            : base(IgnoreNoType, parseResponse) { }
+
+        protected static Task<NoType> IgnoreNoType(HttpContext _) => Task.FromResult(default(NoType));
+    }
 }
