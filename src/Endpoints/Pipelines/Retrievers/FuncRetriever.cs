@@ -18,4 +18,20 @@ namespace Endpoints.Pipelines.Retrievers
             return PipelineResponse.Ok(result);
         }
     }
+
+    internal class FuncRetriever<TOut> : IRetriever<TOut>
+    {
+        private readonly Func<Task<TOut>> _retriever;
+
+        public FuncRetriever(Func<Task<TOut>> retriever)
+        {
+            _retriever = retriever;
+        }
+
+        public async Task<PipelineResponse<TOut>> Retrieve()
+        {
+            var result = await _retriever();
+            return PipelineResponse.Ok(result);
+        }
+    }
 }

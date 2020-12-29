@@ -63,6 +63,30 @@ app => app.UseEndpoints(endpoints =>
     endpoints.MapGet("/test", endpoints.ServiceProvider.Get<IBusinessLogic, Request, Response>());
 }));
 ```
+
+### No input
+
+If an endpoint has no input then there are overloads to create a pipeline with just a request.
+
+
+```
+services.AddTransient<IBusinessLogic>();
+services.AddPipeline<Response>(
+    ModelParser.ParseResponse
+);
+```
+
+If IBusinessLogic implements `IRetriever<Response>`
+
+```
+app => app.UseEndpoints(endpoints =>
+{
+    endpoints.MapGet("/test", endpoints.ServiceProvider.Get<IBusinessLogic, Response>());
+}));
+```
+
+Under the hood there is a type `NoType` that is used by the `Pipeline<TIn, TOut>` and then ignored by the retriever, so it should otherwise work as expected.
+
 ## Getting started
 
 Create new empty web project using `dotnet new web`.
