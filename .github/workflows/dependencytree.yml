@@ -2,7 +2,7 @@ name: Create Dependency Tree Diagram
 
 on:
   push:
-    branches: [ deptree ]
+    branches: [ master ]
 
 jobs:
   generate:
