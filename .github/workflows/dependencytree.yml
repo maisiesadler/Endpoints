@@ -5,8 +5,10 @@ on:
     branches: [ deptree ]
 
 jobs:
-  build:
+  generate:
     runs-on: ubuntu-latest
+    outputs:
+      generated_uml: ${{ steps.generate_uml.outputs.result }}
     
     steps:
     - uses: actions/checkout@v2
@@ -21,11 +23,20 @@ jobs:
       run: dotnet build -c Release
       working-directory: ./src/Endpoints.Api
 
-    - name: ls
-      run: ls ./src/Endpoints.Api/bin/Release/net5.0
-
     - name: Generate UML dependencies
-      uses: maisiesadler/deptree@0.0.10
+      id: generate_uml
+      uses: maisiesadler/deptree@0.0.11
       with:
         application-config-location: './applicationconfig.json'
         assembly-location: './src/Endpoints.Api/bin/Release/net5.0/Endpoints.Api.dll'
+
+  create-file:
+    - name: Output
+      needs: generate
+      shell: bash
+      run: ${{ needs.generate.outputs.generated_uml }} > file.md
+
+    - uses: EndBug/add-and-commit@v7
+      with:
+        default_author: github_actions
+        message: 'Generate diagrams'
