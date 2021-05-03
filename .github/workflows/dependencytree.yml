@@ -17,12 +17,12 @@ jobs:
       env:
           NUGET_AUTH_TOKEN: ${{secrets.NUGET_AUTH_TOKEN}}
 
-    - name: ls
-      run: ls ./src/Endpoints.Api/bin/Release/net5.0
-
     - name: Build project
       run: dotnet build -c Release
       working-directory: ./src/Endpoints.Api
+
+    - name: ls
+      run: ls ./src/Endpoints.Api/bin/Release/net5.0
 
     - name: Generate UML dependencies
       uses: maisiesadler/deptree@0.0.10
