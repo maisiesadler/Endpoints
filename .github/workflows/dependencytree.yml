@@ -17,6 +17,9 @@ jobs:
       env:
           NUGET_AUTH_TOKEN: ${{secrets.NUGET_AUTH_TOKEN}}
 
+    - name: pwd
+      run: pwd
+
     - name: Build project
       run: dotnet build -c Release
       working-directory: ./src/Endpoints.Api
@@ -26,5 +29,3 @@ jobs:
       with:
         application-config-location: './applicationconfig.json'
         assembly-location: ''
-      volumes:
-        - /app:./
