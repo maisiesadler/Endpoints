@@ -31,8 +31,11 @@ jobs:
         assembly-location: './src/Endpoints.Api/bin/Release/net5.0/Endpoints.Api.dll'
 
   create-file:
-    - name: Output
-      needs: generate
+    name: Generate file
+    runs-on: ubuntu-latest
+    needs: generate
+
+    - name: Output file
       shell: bash
       run: ${{ needs.generate.outputs.generated_uml }} > file.md
 
