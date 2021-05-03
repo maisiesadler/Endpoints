@@ -1,4 +1,4 @@
-name: Release Nuget Package
+name: Create Dependency Tree Diagram
 
 on:
   push:
@@ -20,4 +20,4 @@ jobs:
     #     docker rm -v $id
 
     - name: Generate UML dependencies
-      uses: maisiesadler/deptree@0.0.7
+      uses: maisiesadler/deptree@0.0.8
