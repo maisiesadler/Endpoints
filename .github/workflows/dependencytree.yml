@@ -28,7 +28,6 @@ jobs:
         APPLICATION_CONFIG_LOCATION: './applicationconfig.json'
         ASSEMBLY_LOCATION: './src/Endpoints.Api/bin/Release/net5.0/Endpoints.Api.dll'
 
-    steps:
     - name: Output file
       shell: bash
       run: echo '${{ steps.generate_uml.outputs.result }}' > Dependencies.md
