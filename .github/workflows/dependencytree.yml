@@ -25,10 +25,10 @@ jobs:
 
     - name: Generate UML dependencies
       id: generate_uml
-      uses: maisiesadler/deptree@0.0.13
+      uses: maisiesadler/deptree@0.0.14
       env:
-        application-config-location: './applicationconfig.json'
-        assembly-location: './src/Endpoints.Api/bin/Release/net5.0/Endpoints.Api.dll'
+        APPLICATION_CONFIG_LOCATION: './applicationconfig.json'
+        ASSEMBLY_LOCATION: './src/Endpoints.Api/bin/Release/net5.0/Endpoints.Api.dll'
 
   create-file:
     name: Generate file
