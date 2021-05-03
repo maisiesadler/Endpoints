@@ -17,8 +17,8 @@ jobs:
       env:
           NUGET_AUTH_TOKEN: ${{secrets.NUGET_AUTH_TOKEN}}
 
-    - name: pwd
-      run: pwd
+    - name: ls
+      run: ls ./src/Endpoints.Api/bin/Release/net5.0
 
     - name: Build project
       run: dotnet build -c Release
@@ -28,4 +28,4 @@ jobs:
       uses: maisiesadler/deptree@0.0.10
       with:
         application-config-location: './applicationconfig.json'
-        assembly-location: ''
+        assembly-location: './src/Endpoints.Api/bin/Release/net5.0/Endpoints.Api.dll'
