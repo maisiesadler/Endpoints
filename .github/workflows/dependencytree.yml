@@ -11,13 +11,18 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    # - name: Docker build assembly
-    #   shell: bash
-    #   run: |
-    #     docker build -t deptree .
-    #     id=$(docker create deptree)
-    #     docker cp $id:/app/DepTree.Console.dll - > DepTree.Console.dll
-    #     docker rm -v $id
+    - uses: actions/setup-dotnet@v1
+      with:
+          source-url: https://api.nuget.org/v3/index.json
+      env:
+          NUGET_AUTH_TOKEN: ${{secrets.NUGET_AUTH_TOKEN}}
+
+    - name: Build project
+      run: dotnet build -c Release
+      working-directory: ./src/Endpoints.Api
 
     - name: Generate UML dependencies
       uses: maisiesadler/deptree@0.0.10
+      with:
+        application-config-location: './applicationconfig.json'
+        assembly-location: ''
