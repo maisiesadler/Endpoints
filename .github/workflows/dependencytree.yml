@@ -26,3 +26,5 @@ jobs:
       with:
         application-config-location: './applicationconfig.json'
         assembly-location: ''
+      volumes:
+        - /app:./
