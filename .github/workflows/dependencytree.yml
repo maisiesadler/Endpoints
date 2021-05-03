@@ -26,7 +26,7 @@ jobs:
     - name: Generate UML dependencies
       id: generate_uml
       uses: maisiesadler/deptree@0.0.13
-      with:
+      env:
         application-config-location: './applicationconfig.json'
         assembly-location: './src/Endpoints.Api/bin/Release/net5.0/Endpoints.Api.dll'
 
