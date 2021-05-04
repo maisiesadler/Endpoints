@@ -1,0 +1,38 @@
+name: Create Dependency Tree Diagram
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-dotnet@v1
+      with:
+          source-url: https://api.nuget.org/v3/index.json
+      env:
+          NUGET_AUTH_TOKEN: ${{secrets.NUGET_AUTH_TOKEN}}
+
+    - name: Build project
+      run: dotnet build -c Release
+      working-directory: ./src/Endpoints.Api
+
+    - name: Generate UML dependencies
+      id: generate_uml
+      uses: maisiesadler/deptree@0.0.21
+      env:
+        APPLICATION_CONFIG_LOCATION: './applicationconfig.json'
+        ASSEMBLY_LOCATION: './src/Endpoints.Api/bin/Release/net5.0/Endpoints.Api.dll'
+
+    - name: Output file
+      shell: bash
+      run: echo '${{ steps.generate_uml.outputs.result }}' > Dependencies.md
+
+    - uses: EndBug/add-and-commit@v7
+      with:
+        default_author: github_actions
+        message: 'Generate diagrams'
