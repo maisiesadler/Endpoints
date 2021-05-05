@@ -23,10 +23,11 @@ jobs:
 
     - name: Generate UML dependencies
       id: generate_uml
-      uses: maisiesadler/deptree@v0.0.25
+      uses: maisiesadler/deptree@v0.0.30-beta001
       env:
         APPLICATION_CONFIG_LOCATION: './applicationconfig.json'
         ASSEMBLY_LOCATION: './src/Endpoints.Api/bin/Release/net5.0/Endpoints.Api.dll'
+        INTERFACE_RESOLVER: 'None'
 
     - name: Output file
       shell: bash
